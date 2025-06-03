@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "check_utils"
+
+[tool.pylint."MESSAGES CONTROL"]
+
+confidence = ''
+
+disable = '''
+          fixme,
+          line-too-long,
+          unnecessary-pass,
+          too-many-arguments,
+          too-many-positional-arguments,
+          too-few-public-methods,
+          too-many-locals,
+          use-dict-literal
+          '''
