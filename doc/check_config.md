@@ -41,6 +41,7 @@ Do we want to skip entire files on an arch or os basis?
 
 package = "name"
 timeout = 1800 # Timeout per test file in seconds
+# Prefer not to modify. Set to startdir by default.
 out_dir = "."
 jobs = 4
 

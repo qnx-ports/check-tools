@@ -2,7 +2,7 @@
 from .config import Config
 from .junitxml import JUnitXML
 from .definitions import IllegalArgumentError, InvalidSubprocessResultError,\
-                CheckExit, PACKAGE_CONFIG, PROJECT_CONFIG, BUILD_DIR
+                CheckExit, BUILD_DIR, START_DIR, PACKAGE_CONFIG, PROJECT_CONFIG
 from .test import GenericTest, TestGenerator, BinaryTest, ProjectTest
 from .system_spec import SystemSpec
 from .skipped import Skipped, SkippedCase, SkippedSuite
@@ -32,9 +32,10 @@ __all__ = [
         'InvalidSubprocessResultError',
         'CheckExit',
         'TEST_FRAMEWORK_BUILTINS',
+        'START_DIR',
+        'BUILD_DIR',
         'PACKAGE_CONFIG',
         'PROJECT_CONFIG',
-        'BUILD_DIR',
         'GenericTest',
         'TestGenerator',
         'BinaryTest',
