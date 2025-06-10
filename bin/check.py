@@ -137,6 +137,8 @@ class Main:
 
         self.start_time = datetime.datetime.now().isoformat()
 
+        Path(self.config_obj['out_dir']).mkdir(parents=True, exist_ok=True)
+
     def main(self) -> check_utils.CheckExit:
         """
         Entrypoint for the program.

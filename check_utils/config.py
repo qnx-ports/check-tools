@@ -5,11 +5,15 @@ Read in config.toml files for a package.
 import logging
 from pathlib import Path
 import tomllib
-from typing import Optional, Self
+from typing import Final, Optional, Self
 
 from .definitions import START_DIR, PACKAGE_CONFIG, PROJECT_CONFIG
 
 class Config(dict):
+    DEFAULTS: Final[dict] = {
+            'out_dir': str(START_DIR.joinpath('test-out'))
+            }
+
     """
     Corresponds to the hierarchical configuration of a package.
     Configuration is read from a aports-level config.toml that applies to all
@@ -26,8 +30,7 @@ class Config(dict):
         if project_config is None:
             project_config = PROJECT_CONFIG
 
-        # Set out_dir to START_DIR by default.
-        conf = { 'out_dir': START_DIR }
+        conf = cls.DEFAULTS
         if Path(project_config).exists() and Path(project_config).is_file():
             with open(project_config, "rb") as f:
                 temp_conf = tomllib.load(f)
