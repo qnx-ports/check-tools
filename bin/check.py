@@ -7,9 +7,11 @@ import argparse
 import datetime
 #from functools import cache
 import logging
+import os
 from pathlib import Path
 import sys
-from typing import Generator, Optional
+import tempfile
+from typing import Generator
 
 import check_utils
 
@@ -36,8 +38,7 @@ class Main:
         self.verbose = verbose
 
     # --- PRIVATE ---
-    def _generate_outfile_name(self, package: str, extension: str,
-                               binary: Optional[str] = None) -> str:
+    def _generate_outfile_name(self, *args: str, extension: str) -> str:
         """
         Generates the name of a report.
 
@@ -48,9 +49,7 @@ class Main:
         """
         if extension[0] != '.':
             extension = '.' + extension
-        return package + '_' \
-                + (binary + '_' if binary is not None else '') \
-                + self.start_time + extension
+        return args.join('_') + self.start_time + extension
 
     def _combine_congregate_report(self, congregate_report: str,
                                    individual_report: str) -> None:
@@ -97,18 +96,20 @@ class Main:
         @param output: name of the command-line output file.
         @yield a test to run.
         """
+        def _report_f(binary):
+            f, tmp_report = tempfile.mkstemp(suffix='.xml')
+            os.close(f)
+            return tmp_report
+
         spec = check_utils.SystemSpec.from_uname()
         for test_framework in check_utils.TEST_FRAMEWORK_BUILTINS:
+            # We don't want to keep any generated reports, so provide a temp
+            # file instead.
             yield from test_framework.generate_test_list(
                     output,
                     spec,
                     self.config_obj,
-                    lambda binary : self.config_obj['out_dir'] + '/' \
-                            + self._generate_outfile_name(
-                                self.config_obj['package'],
-                                '.xml',
-                                binary
-                                )
+                    _report_f
                     )
 
     # --- PUBLIC ---
@@ -148,12 +149,12 @@ class Main:
         report: str = self.config_obj['out_dir'] + '/' \
                 + self._generate_outfile_name(
                         self.config_obj['package'],
-                        '.xml'
+                        extension='.xml'
                         )
         output: str = self.config_obj['out_dir'] + '/' \
                 + self._generate_outfile_name(
                         self.config_obj['package'],
-                        '.txt'
+                        extension='.txt'
                         )
         logging.info('Reporting results in %s.', report)
         logging.info('Reporting output in %s.', output)

@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 import glob
 import logging
 from pathlib import Path
+from tempfile import mkstemp
 from typing import List, Optional, Callable, Generator
 
 from .config import Config

@@ -39,7 +39,7 @@ The current progress for `bin/check.py`:
   - [x] Workflow is verified on linux.
   - [ ] Workflow is verified on QNX.
   - [x] Skipped tests are added to the resulting JUnitXML.
-  - [ ] Errored tests are added to the resulting JUnitXML.
+  - [x] Errored tests are added to the resulting JUnitXML.
   - [ ] Can execute a custom number of jobs in parallel.
 - catch2:
   - [x] Workflow is implemented.

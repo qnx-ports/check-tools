@@ -9,6 +9,7 @@ from typing import Final
 from unittest.mock import ANY
 
 from check_utils import PyTest, SkippedSuite, BUILD_DIR
+import common
 
 REPORT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.xml'
 OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
