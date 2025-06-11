@@ -325,31 +325,51 @@ class JUnitXML:
             if float(timestamp) < float(local_timestamp):
                 timestamp = local_timestamp
 
+        test_cases = 0
+        failed = 0
+        errored = 0
+        skipped = 0
         time = 0.0
         assertions = 0
         for test_suite in test_suites.findall('./testsuite'):
-
+            suite_test_cases = 0
+            suite_failed = 0
+            suite_errored = 0
+            suite_skipped = 0
             suite_assertions = 0
             suite_time = 0.0
+
+            suite_test_cases = len(test_suite.findall('./testcase'))
+
+            suite_failed = len(test_suite.findall(
+                './testcase//failure'))
+
+            suite_errored = len(test_suite.findall(
+                './testcase//error'))
+
+            suite_skipped = len(test_suite.findall(
+                './testcase//skipped'))
+
             for test_case in test_suite.findall('./testcase'):
                 a = test_case.get('assertions', '')
                 suite_assertions += int(a if a.isnumeric() else 0)
                 t = test_case.get('time', '')
                 suite_time += float(t if t.isnumeric() else 0.0)
 
+            test_suite.set('tests', str(suite_test_cases))
+            test_suite.set('failures', str(suite_failed))
+            test_suite.set('errors', str(suite_errored))
+            test_suite.set('skipped', str(suite_skipped))
+            test_suite.set('assertions', str(suite_assertions))
             test_suite.set('time', str(suite_time))
             test_suite.set('assertions', str(suite_assertions))
 
             time += suite_time
             assertions += suite_assertions
-
-        test_cases = len(test_suites.findall('./testsuite/testcase'))
-        failed = len(test_suites.findall(
-            './testsuite/testcase//failure'))
-        errored = len(test_suites.findall(
-            './testsuite/testcase//error'))
-        skipped = len(test_suites.findall(
-            './testsuite/testcase//skipped'))
+            test_cases += suite_test_cases
+            failed += suite_failed
+            errored += suite_errored
+            skipped += suite_skipped
 
         test_suites.set('tests', str(test_cases))
         test_suites.set('failures', str(failed))

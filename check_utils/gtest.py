@@ -74,6 +74,9 @@ class GTest(BinaryTest):
         if len(suite) != 0:
             self.tests.append((suite, cases))
 
+        self.errored = []
+        self.errored_tests = []
+
     def _run_gtest(self) -> None:
         report_xml = JUnitXML()
         with open(self.get_output(), 'a', encoding="utf-8") as output_f:
