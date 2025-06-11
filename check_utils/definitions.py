@@ -32,7 +32,7 @@ BUILD_DIR: Final[Path] = Path(os.getenv('BUILD_DIR'))\
 
 START_DIR: Final[Path] = Path(os.getenv('START_DIR'))\
         if os.getenv('START_DIR') is not None\
-        else Path.cwd().joinpath('..')
+        else Path.cwd().joinpath('../..')
 
 PACKAGE_CONFIG: Final[Path] = Path(os.getenv('PACKAGE_CONFIG'))\
         if os.getenv('PACKAGE_CONFIG') is not None\
