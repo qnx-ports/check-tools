@@ -49,7 +49,7 @@ class Main:
         """
         if extension[0] != '.':
             extension = '.' + extension
-        return args.join('_') + self.start_time + extension
+        return '_'.join(args) + self.start_time + extension
 
     def _combine_congregate_report(self, congregate_report: str,
                                    individual_report: str) -> None:

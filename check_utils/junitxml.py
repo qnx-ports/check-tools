@@ -322,11 +322,9 @@ class JUnitXML:
                     zero_timestamp
                     ))
         for elem in test_suites.findall('./testsuite[@timestamp]'):
+            ts = elem.get('timestamp', zero_timestamp)
             local_timestamp = JUnitXML._convert_iso_timestamp(
-                    elem.get(
-                        'timestamp',
-                        zero_timestamp
-                        ))
+                    ts if len(ts) != 0 else zero_timestamp)
             if float(timestamp) < float(local_timestamp):
                 timestamp = local_timestamp
 
