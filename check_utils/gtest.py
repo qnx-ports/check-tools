@@ -119,6 +119,10 @@ class GTest(BinaryTest):
                                                                  .now()\
                                                                  .isoformat(),
                                                          '0', cpe.stderr, ''))
+
+                        if Path(tmp_report).exists():
+                            Path(tmp_report).unlink()
+
                 self.errored.append(ErroredSuite(suite, '', timestamp,
                                                  errored_cases))
         report_xml.write(self.report)

@@ -306,8 +306,7 @@ def test__run_gtest_errored(mocker, report_file, output_file):
     assert gtest.errored_tests == ['Foo.Test1', 'Foo.Test2', 'Bar.3tseT', 'Bar.Ttse4']
     assert len(gtest.errored) == 2 # 2 suites
 
-    # tmp_file still exists as a result of mkstemp_mock.
-    #assert not Path(MKSTEMP_REPORT_FILE).exists()
+    assert not Path(MKSTEMP_REPORT_FILE).exists()
     # report_file must still be created for _report_errored_tests to succeed.
     assert Path(report_file).exists()
 
