@@ -68,7 +68,7 @@ class FailedSuite:
     def __init__(self, name: str, file: str, timestamp: str,
                  cases: List[FailedCase]) -> None:
         self.name = name
-        self.file = file,
+        self.file = file
         self.timestamp = timestamp
         self.cases = cases
 
