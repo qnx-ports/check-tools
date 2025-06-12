@@ -63,6 +63,11 @@ class JUnitXML:
         self._balance(self._tree.getroot())
         return self._tree
 
+    def set_tree(self, tree: ET.ElementTree) -> None:
+        self._tree = tree
+
+    tree = property(fget=get_tree, fset=set_tree)
+
     @classmethod
     def make_from_skipped(cls, suites: List[SkippedSuite]) -> Self:
         suites_elem: ET.Element = JUnitXML.create_empty_testsuites()
@@ -409,5 +414,3 @@ class JUnitXML:
 
             root = temp_root
             tree._setroot(root)
-
-    tree = property(fget=get_tree)
