@@ -15,37 +15,38 @@ from .errored import ErroredSuite
 from .passed import PassedSuite
 
 class JUnitXML:
-    tree: ET.ElementTree = None
+    _tree: ET.ElementTree = None
 
     def __init__(self,
                  file: Optional[str] = None,
                  tree: Optional[ET.ElementTree] = None):
         if tree is not None:
-            self.tree = tree
+            self._tree = tree
         elif file is None:
-            self.tree = ET.ElementTree(element=JUnitXML.create_empty_testsuites())
+            self._tree = ET.ElementTree(element=JUnitXML.create_empty_testsuites())
         elif not Path(file).exists() and Path(file).is_file():
             raise IllegalArgumentError('JUnitXML supplied invalid '
                                                    'file path.')
         else:
-            self.tree = ET.parse(file)
+            self._tree = ET.parse(file)
 
-        if self.tree is not None:
-            JUnitXML._standardize_tree(self.tree)
+        if self._tree is not None:
+            JUnitXML._standardize_tree(self._tree)
 
     def load(self, file):
         if not Path(file).exists() and Path(file).is_file():
             raise IllegalArgumentError('JUnitXML supplied invalid '
                                                    'file path.')
         else:
-            self.tree = ET.parse(file)
+            self._tree = ET.parse(file)
 
-        if self.tree is not None:
-            JUnitXML._standardize_tree(self.tree)
+        if self._tree is not None:
+            JUnitXML._standardize_tree(self._tree)
 
     # --- PUBLIC ---
     def write(self, file):
-        self.tree.write(file)
+        self._balance(self._tree.getroot())
+        self._tree.write(file)
 
     def is_success(self) -> bool:
         """
@@ -54,9 +55,13 @@ class JUnitXML:
         @return True if there were no failures or errors,
                 False otherwise.
         """
-        root = self.tree.getroot()
+        root = self._tree.getroot()
         return (root.get('failures', '0') == '0') \
                 and (root.get('errors', '0') == '0')
+
+    def get_tree(self) -> ET.ElementTree:
+        self._balance(self._tree.getroot())
+        return self._tree
 
     @classmethod
     def make_from_skipped(cls, suites: List[SkippedSuite]) -> Self:
@@ -83,7 +88,6 @@ class JUnitXML:
 
                 suite_elem.append(case_elem)
 
-        JUnitXML._balance(suites_elem)
         return cls(tree=ET.ElementTree(suites_elem))
 
     @classmethod
@@ -115,7 +119,6 @@ class JUnitXML:
 
                 suite_elem.append(case_elem)
 
-        JUnitXML._balance(suites_elem)
         return cls(tree=ET.ElementTree(suites_elem))
 
     @classmethod
@@ -147,7 +150,6 @@ class JUnitXML:
 
                 suite_elem.append(case_elem)
 
-        JUnitXML._balance(suites_elem)
         return cls(tree=ET.ElementTree(suites_elem))
 
     @classmethod
@@ -173,7 +175,6 @@ class JUnitXML:
 
                 suite_elem.append(case_elem)
 
-        JUnitXML._balance(suites_elem)
         return cls(tree=ET.ElementTree(suites_elem))
 
     @classmethod
@@ -221,7 +222,7 @@ class JUnitXML:
         if not isinstance(other, JUnitXML):
             raise NotImplementedError('Addition with invalid type.')
 
-        tree = copy.deepcopy(self.tree)
+        tree = copy.deepcopy(self._tree)
         JUnitXML._iadd(tree.tree, other.tree)
 
         return JUnitXML(tree=tree)
@@ -235,7 +236,7 @@ class JUnitXML:
         if not isinstance(other, JUnitXML):
             raise NotImplementedError('Addition with invalid type.')
 
-        JUnitXML._iadd(self.tree, other.tree)
+        JUnitXML._iadd(self._tree, other.tree)
 
         return self
 
@@ -298,7 +299,6 @@ class JUnitXML:
         else:
             raise RuntimeError('Report in bad format.')
 
-        JUnitXML._balance(root1)
         return tree1
 
     @classmethod
@@ -409,3 +409,5 @@ class JUnitXML:
 
             root = temp_root
             tree._setroot(root)
+
+    tree = property(fget=get_tree)
