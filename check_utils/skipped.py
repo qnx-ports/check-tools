@@ -3,7 +3,6 @@ Provides data formats for skipped tests to help communicate with the underlying
 test framework, and convert to JUnitXML.
 """
 
-from functools import cache
 from typing import List, Optional, Self
 
 from .system_spec import SystemSpec
@@ -35,15 +34,14 @@ class SkippedCase:
     def get_arch(self) -> List[str]:
         return self.arch
 
-    @cache
     def get_message(self) -> str:
         if self.message is not None:
             return self.message
 
         return 'Skipped for '\
-               + '/'.join(self.os) if len(self.os) != 0 else 'all SDPs'\
+               + ('/'.join(self.os) if len(self.os) != 0 else 'all SDPs')\
                + ' on '\
-               + '/'.join(self.arch) if len(self.arch) != 0 else 'all archs'\
+               + ('/'.join(self.arch) if len(self.arch) != 0 else 'all archs')\
                + '.'
 
     def is_match(self, spec: SystemSpec) -> bool:
