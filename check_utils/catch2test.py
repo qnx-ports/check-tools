@@ -19,7 +19,7 @@ class Catch2Test(BinaryTest):
                    f'--reporter xml::out={self.get_report()} '
                    f'{self.opts} ')
         if self.skipped is not None and not self.skipped.is_empty():
-            command += f'*,~{',~'.join(self.skipped.get_case_names())} '
+            command += f'*,~{",~".join(self.skipped.get_case_names())} '
 
         logging.info("Catch2Test running command: %s", command)
         with open(self.get_output(), 'a', encoding="utf-8") as output_f:

@@ -63,7 +63,7 @@ class MesonTest(ProjectTest):
 
         run_tests = [test for test in self.tests if test not in skipped_tests]
 
-        command = f'meson test {' '.join(run_tests)} -C {BUILD_DIR} {self.opts}'
+        command = f'meson test {" ".join(run_tests)} -C {BUILD_DIR} {self.opts}'
         logging.info("MesonTest running command: %s", command)
         with open(self.get_output(), 'a', encoding="utf-8") as output_f:
             subprocess.run(
