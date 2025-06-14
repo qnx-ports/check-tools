@@ -22,7 +22,7 @@ class PyTest(ProjectTest):
             case_names = [case
                           for s in self.skipped for case in s.get_case_names()]
             formatted_skipped = [f'not {case}' for case in case_names]
-            command += f'-k "{' and '.join(formatted_skipped)}" '
+            command += '-k "' + ' and '.join(formatted_skipped) + '" '
         logging.info("PyTest running command: %s", command)
         with open(self.get_output(), 'a', encoding="utf-8") as output_f:
             subprocess.run(
