@@ -1,5 +1,5 @@
 """
-Read in config.toml files for a package.
+Read in test.toml files for a package.
 """
 
 import logging
@@ -16,8 +16,8 @@ class Config(dict):
 
     """
     Corresponds to the hierarchical configuration of a package.
-    Configuration is read from a aports-level config.toml that applies to all
-    packages, and a package-level config.toml file that applies to an individual
+    Configuration is read from a aports-level test.toml that applies to all
+    packages, and a package-level test.toml file that applies to an individual
     package. The package-level configuration overrides the defaults set in the
     aports-level configuration.
     """

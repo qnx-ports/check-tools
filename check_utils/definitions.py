@@ -36,8 +36,8 @@ START_DIR: Final[Path] = Path(os.getenv('START_DIR'))\
 
 PACKAGE_CONFIG: Final[Path] = Path(os.getenv('PACKAGE_CONFIG'))\
         if os.getenv('PACKAGE_CONFIG') is not None\
-        else START_DIR.joinpath('config.toml')
+        else START_DIR.joinpath('test.toml')
 
 PROJECT_CONFIG: Final[Path] = Path(os.getenv('PROJECT_CONFIG'))\
         if os.getenv('PROJECT_CONFIG') is not None\
-        else START_DIR.joinpath('../../config.toml')
+        else START_DIR.joinpath('../../test.toml')

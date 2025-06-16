@@ -31,13 +31,13 @@ skip these without otherwise reporting them. See norun.
 Should add errored tests to the congregate report when it's not already done
 (i.e. for googletest).
 
-Should have a package level config.toml file that applies only to the package,
-and a project level config.toml file that applies to all packages containing
+Should have a package level test.toml file that applies only to the package,
+and a project level test.toml file that applies to all packages containing
 preset defaults.
 
 Do we want to skip entire files on an arch or os basis?
 ```toml
-# config.toml
+# test.toml
 
 package = "name"
 timeout = 1800 # Timeout per test file in seconds
