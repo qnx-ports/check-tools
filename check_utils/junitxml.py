@@ -24,7 +24,7 @@ class JUnitXML:
             self._tree = tree
         elif file is None:
             self._tree = ET.ElementTree(element=JUnitXML.create_empty_testsuites())
-        elif not Path(file).exists() and Path(file).is_file():
+        elif not (Path(file).exists() and Path(file).is_file()):
             raise IllegalArgumentError('JUnitXML supplied invalid '
                                                    'file path.')
         else:

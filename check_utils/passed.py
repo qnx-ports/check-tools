@@ -48,9 +48,9 @@ class PassedCase:
         return cls(name, line, time, assertions)
 
 class PassedSuite:
-    name: str
-    file: str
-    timestamp: str
+    name: str = ''
+    file: str = ''
+    timestamp: str = ''
     cases: List[PassedCase]
 
     def __init__(self, name: str, file: str, timestamp: str,

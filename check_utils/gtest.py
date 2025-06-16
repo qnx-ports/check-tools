@@ -37,6 +37,9 @@ class GTest(BinaryTest):
                                        for case_name in suite.get_case_names()]
 
         # Run test cases individually so we can catch an error.
+        # 
+        # FIXME: Do this in a more reliable way. EXIT_FAILURE can occur without
+        # a bad output from --gtest_list_tests.
         command = f'./{self.binary} --gtest_list_tests'
         logging.info('GTest running command: %s', command)
         status = None
@@ -53,6 +56,10 @@ class GTest(BinaryTest):
         cases = []
         self.tests = []
         for line in output.splitlines():
+            # Can include comments for GetParam()
+            ind = line.find('#')
+            if ind != -1:
+                line = line[:ind]
             stripped = line.strip()
             if ' ' not in stripped and stripped.endswith('.'):
                 # Suite identifier.
@@ -91,41 +98,65 @@ class GTest(BinaryTest):
                     f, tmp_report = tempfile.mkstemp(suffix='.xml')
                     os.close(f)
 
+                    # Googletest uses a premature-exit-file to allow runner
+                    # programs to detect premature exits. See:
+                    # https://google.github.io/googletest/advanced.html
+                    # We use this to detect errored cases.
+                    f, tmp_premature_exit = tempfile.mkstemp()
+                    os.close(f)
+                    os.environ['TEST_PREMATURE_EXIT_FILE'] = tmp_premature_exit
+
+                    # subprocess.run does not support io.StringIO stderr
+                    stderr_f, tmp_stderr = tempfile.mkstemp()
+
                     command = (f'./{self.binary} '
                                f'--gtest_output="xml:{tmp_report}" '
                                f'--gtest_filter="{case_full}" '
                                f'{self.opts}')
                     logging.info("GTest running command: %s", command)
-                    try:
-                        subprocess.run(
-                                args=command,
-                                stderr=output_f,
-                                stdout=output_f,
-                                timeout=self.timeout,
-                                check=True,
-                                shell=True
-                        )
-
-                        tmp_xml = JUnitXML(file=tmp_report)
-
-                        report_xml += tmp_xml
-
-                        Path(tmp_report).unlink()
-                    except subprocess.CalledProcessError as cpe:
+                    subprocess.run(
+                            args=command,
+                            stdout=output_f,
+                            stderr=stderr_f,
+                            timeout=self.timeout,
+                            check=False,
+                            shell=True
+                    )
+                    os.close(stderr_f)
+                    if Path(tmp_premature_exit).exists():
+                        stderr = ''
+                        with open(tmp_stderr, 'r', encoding="utf-8") as f:
+                            stderr = f.read()
+                        logging.info('%s terminated with err %s.', self.binary,
+                                     stderr)
                         self.errored_tests.append(case_full)
 
                         errored_cases.append(ErroredCase(case, '',
                                                          datetime.datetime\
                                                                  .now()\
                                                                  .isoformat(),
-                                                         '0', cpe.stderr, ''))
+                                                         '0',
+                                                         stderr,
+                                                         ''))
 
+                        Path(tmp_premature_exit).unlink()
                         if Path(tmp_report).exists():
                             Path(tmp_report).unlink()
+                    else:
+                        tmp_xml = JUnitXML(file=tmp_report)
 
-                self.errored.append(ErroredSuite(suite, '', timestamp,
-                                                 errored_cases))
+                        report_xml += tmp_xml
+
+                        Path(tmp_report).unlink()
+
+                    Path(tmp_stderr).unlink()
+
+                if len(errored_cases) != 0:
+                    self.errored.append(ErroredSuite(suite, '', timestamp,
+                                                     errored_cases))
         report_xml.write(self.report)
+
+        os.environ['TEST_PREMATURE_EXIT_FILE'] = ''
 
     def _report_skipped_tests(self) -> None:
         if self.skipped is not None:

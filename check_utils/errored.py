@@ -60,9 +60,10 @@ class ErroredCase:
         return cls(name, line, time, assertions, message, etype)
 
 class ErroredSuite:
-    name: str
-    file: str
-    cases: List[ErroredCase]
+    name: str = ''
+    file: str = ''
+    timestamp: str = ''
+    cases: List[ErroredCase] = []
 
     def __init__(self, name: str, file: str, timestamp: str,
                  cases: List[ErroredCase]) -> None:

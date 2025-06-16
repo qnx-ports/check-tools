@@ -60,9 +60,9 @@ class FailedCase:
         return cls(name, line, time, assertions, message, ftype)
 
 class FailedSuite:
-    name: str
-    file: str
-    timestamp: str
+    name: str = ''
+    file: str = ''
+    timestamp: str = ''
     cases: List[FailedCase] = []
 
     def __init__(self, name: str, file: str, timestamp: str,

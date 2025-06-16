@@ -14,8 +14,10 @@ from check_utils import GTest, Skipped, JUnitXML, ErroredCase, ErroredSuite
 import common
 
 REPORT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.xml'
-MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
 OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
+MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
+PREMATURE_EXIT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}_exit'
+STDERR_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}_stderr.txt'
 
 @pytest.fixture()
 def output_file():
@@ -45,13 +47,27 @@ def report_file():
     if (report_path.exists()):
         report_path.unlink()
 
-def mkstemp_mock(suffix: str):
-    # Spoof a test run...
-    tmp_xml = JUnitXML.make_from_passed([])
-    tmp_xml.write(MKSTEMP_REPORT_FILE)
-    return (os.open(MKSTEMP_REPORT_FILE, os.O_WRONLY | os.O_CREAT), MKSTEMP_REPORT_FILE)
+class MkstempMockWrapper:
+    count = 0
 
-@patch.object(tempfile, 'mkstemp', mkstemp_mock)
+    @classmethod
+    def mkstemp_mock(cls, suffix: str = None):
+        # Spoof a test run...
+        # It first creates a temporary xml file, then creates a file to track
+        # premature exits, then creates an output file for stderr.
+        if cls.count == 0:
+            cls.count = 1
+            tmp_xml = JUnitXML.make_from_passed([])
+            tmp_xml.write(MKSTEMP_REPORT_FILE)
+            return (os.open(MKSTEMP_REPORT_FILE, os.O_RDWR | os.O_CREAT), MKSTEMP_REPORT_FILE)
+        elif cls.count == 1:
+            cls.count = 2
+            return (os.open(PREMATURE_EXIT_FILE, os.O_RDWR | os.O_CREAT), PREMATURE_EXIT_FILE)
+        else:
+            cls.count = 0
+            return (os.open(STDERR_FILE, os.O_RDWR | os.O_CREAT), STDERR_FILE)
+
+@patch.object(tempfile, 'mkstemp', MkstempMockWrapper.mkstemp_mock)
 @pytest.mark.parametrize('opts,timeout,blurb', [
     ('', None, ''),
     ('--my-custom-opt1 --my-custom-opt2', 300, 'Run this program with --check_for_leaks to enable custom leak checking in the tests.\n'),
@@ -78,7 +94,7 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -87,7 +103,7 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -96,7 +112,7 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -105,7 +121,7 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -117,9 +133,11 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
     subprocess.run.assert_any_call(**expected_kwargs4)
 
     assert not Path(MKSTEMP_REPORT_FILE).exists()
+    assert not Path(PREMATURE_EXIT_FILE).exists()
+    assert not Path(STDERR_FILE).exists()
     assert Path(report_file).exists()
 
-@patch.object(tempfile, 'mkstemp', mkstemp_mock)
+@patch.object(tempfile, 'mkstemp', MkstempMockWrapper.mkstemp_mock)
 def test__run_gtest_skipped1(mocker, report_file, output_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
@@ -141,7 +159,7 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -150,7 +168,7 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -159,7 +177,7 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -168,7 +186,7 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -180,9 +198,11 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
     subprocess.run.assert_any_call(**expected_kwargs4)
 
     assert not Path(MKSTEMP_REPORT_FILE).exists()
+    assert not Path(PREMATURE_EXIT_FILE).exists()
+    assert not Path(STDERR_FILE).exists()
     assert Path(report_file).exists()
 
-@patch.object(tempfile, 'mkstemp', mkstemp_mock)
+@patch.object(tempfile, 'mkstemp', MkstempMockWrapper.mkstemp_mock)
 def test__run_gtest_skipped2(mocker, report_file, output_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
@@ -232,7 +252,7 @@ def test__run_gtest_skipped2(mocker, report_file, output_file):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -241,10 +261,12 @@ def test__run_gtest_skipped2(mocker, report_file, output_file):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
     assert not Path(MKSTEMP_REPORT_FILE).exists()
+    assert not Path(PREMATURE_EXIT_FILE).exists()
+    assert not Path(STDERR_FILE).exists()
     assert Path(report_file).exists()
 
-@patch.object(tempfile, 'mkstemp', mkstemp_mock)
-def test__run_gtest_errored(mocker, report_file, output_file):
+@patch.object(tempfile, 'mkstemp', MkstempMockWrapper.mkstemp_mock)
+def test__run_gtest_errored1(mocker, report_file, output_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'Foo.\n'
@@ -257,15 +279,14 @@ def test__run_gtest_errored(mocker, report_file, output_file):
     gtest = GTest('bin1', report_file, output_file, '',
                   None, None)
 
-    run_mock = mocker.patch('subprocess.run')
-    run_mock.side_effect = subprocess.CalledProcessError('returncode', 'cmd')
+    mocker.patch('subprocess.run')
 
     expected_kwargs1 = {
             'args': f'./bin1 --gtest_output="xml:{MKSTEMP_REPORT_FILE}" --gtest_filter="Foo.Test1" ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -274,7 +295,7 @@ def test__run_gtest_errored(mocker, report_file, output_file):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -283,7 +304,7 @@ def test__run_gtest_errored(mocker, report_file, output_file):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -292,7 +313,7 @@ def test__run_gtest_errored(mocker, report_file, output_file):
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
-            'check': True,
+            'check': False,
             'shell': True
             }
 
@@ -307,6 +328,8 @@ def test__run_gtest_errored(mocker, report_file, output_file):
     assert len(gtest.errored) == 2 # 2 suites
 
     assert not Path(MKSTEMP_REPORT_FILE).exists()
+    assert not Path(PREMATURE_EXIT_FILE).exists()
+    assert not Path(STDERR_FILE).exists()
     # report_file must still be created for _report_errored_tests to succeed.
     assert Path(report_file).exists()
 
