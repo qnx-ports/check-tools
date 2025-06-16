@@ -16,6 +16,10 @@ class SkippedCase:
 
     def __init__(self, name: str, line: str, os: List[str], arch: List[str],
                  message: Optional[str] = None):
+        assert isinstance(name, str)
+        assert isinstance(line, str)
+        assert isinstance(os, list)
+        assert isinstance(arch, list)
         self.name = name
         self.line = line
         self.os = os
@@ -80,6 +84,10 @@ class SkippedSuite:
 
     def __init__(self, name: str, file: str, timestamp: str,
                  cases: List[SkippedCase]):
+        assert isinstance(name, str)
+        assert isinstance(file, str)
+        assert isinstance(timestamp, str)
+        assert isinstance(cases, list)
         self.name = name
         self.file = file
         self.timestamp = timestamp
@@ -136,6 +144,9 @@ class Skipped:
     suites: List[SkippedSuite] = []
 
     def __init__(self, name: str, norun: bool, suites: List[SkippedSuite]):
+        assert isinstance(name, str)
+        assert isinstance(norun, bool)
+        assert isinstance(suites, list)
         self.name = name
         self.norun = norun
         self.suites = suites

@@ -13,6 +13,10 @@ class PassedCase:
 
     def __init__(self, name: str, line: str, time: str,
                  assertions: str) -> None:
+        assert isinstance(name, str)
+        assert isinstance(line, str)
+        assert isinstance(time, str)
+        assert isinstance(assertions, str)
         self.name = name
         self.line = line
         self.time = time
@@ -55,6 +59,10 @@ class PassedSuite:
 
     def __init__(self, name: str, file: str, timestamp: str,
                  cases: List[PassedCase]) -> None:
+        assert isinstance(name, str)
+        assert isinstance(file, str)
+        assert isinstance(timestamp, str)
+        assert isinstance(cases, list)
         self.name = name
         self.file = file
         self.timestamp = timestamp

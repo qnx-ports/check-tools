@@ -13,6 +13,12 @@ class ErroredCase:
 
     def __init__(self, name: str, line: str, time: str,
                  assertions: str, message: str, etype: str) -> None:
+        assert isinstance(name, str)
+        assert isinstance(line, str)
+        assert isinstance(time, str)
+        assert isinstance(assertions, str)
+        assert isinstance(message, str)
+        assert isinstance(etype, str)
         self.name = name
         self.line = line
         self.time = time
@@ -67,6 +73,10 @@ class ErroredSuite:
 
     def __init__(self, name: str, file: str, timestamp: str,
                  cases: List[ErroredCase]) -> None:
+        assert isinstance(name, str)
+        assert isinstance(file, str)
+        assert isinstance(timestamp, str)
+        assert isinstance(cases, list)
         self.name = name
         self.file = file
         self.timestamp = timestamp
