@@ -19,7 +19,7 @@ root,
 
 ```bash
 python3 -m ensurepip
-python3 -m pip install check_utils
+python3 -m pip install -e ./
 export PATH=$PATH:$PWD/bin
 ```
 
