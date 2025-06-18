@@ -1,0 +1,31 @@
+name: ubuntu-22.04
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v3
+
+      # Self-hosted env uses 3.13
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r tests/requirements.txt
+
+      - name: Run tests
+        run: |
+          pytest tests/
