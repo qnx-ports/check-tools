@@ -1,4 +1,5 @@
 # check-tools
+[![Build](https://github.com/qnx-ports/check-tools/actions/workflows/ubuntu-22.04.yml/badge.svg)](https://github.com/qnx-ports/check-tools/actions/workflows/ubuntu-22.04.yml)
 
 Tools for writing the APKBUILD check() function.
 

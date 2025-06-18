@@ -25,15 +25,17 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          pip install check_utils
           pip install -r tests/requirements.txt
           pip install flake8 pytest-cov
 
       - name: Run tests
         run: |
-          pytest --junitxml=report.xml --cov-report=term-missing:skip-covered --cov=app tests/ | tee coverage.txt
+          pytest --junitxml=report.xml --cov-report=term-missing:skip-covered --cov=app tests/ > coverage.txt
 
       - name: Pytest coverage comment
-        uses: MishaKav/pytest-coverage-comment@v1.1.54
+        if: ${{ always() }}
+        uses: MishaKav/pytest-coverage-comment@v1
         with:
           pytest-coverage-path: ./coverage.txt
           junitxml-path: ./report.xml
