@@ -1,4 +1,5 @@
 # check-tools
+[![Build](https://github.com/qnx-ports/check-tools/actions/workflows/ubuntu-22.04.yml/badge.svg)](https://github.com/qnx-ports/check-tools/actions/workflows/ubuntu-22.04.yml)
 
 Tools for writing the APKBUILD check() function.
 
@@ -18,7 +19,7 @@ root,
 
 ```bash
 python3 -m ensurepip
-python3 -m pip install check_utils
+python3 -m pip install -e ./
 export PATH=$PATH:$PWD/bin
 ```
 
