@@ -49,7 +49,9 @@ jobs = 4
 # binary level.
 # Rules for each binary test framework
 [googletest]
-path = "build/*" # glob, so we can automatically test new releases.
+path = """
+build/test/*
+build/bin/*""" # glob, so we can automatically test new releases.
 
 [[googletest.opts]]
 name = "common"

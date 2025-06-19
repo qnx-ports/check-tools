@@ -6,7 +6,6 @@ from abc import ABC, abstractmethod
 import glob
 import logging
 from pathlib import Path
-from tempfile import mkstemp
 from typing import List, Optional, Callable, Generator
 
 from .config import Config
@@ -138,7 +137,9 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
                      cls.get_name_framework())
         framework_config = config.get(cls.get_name_framework(), None)
         if framework_config is not None:
-            binaries = glob.glob(framework_config.get('path', ''))
+            binaries = []
+            for path in framework_config.get('path', '').splitlines():
+                binaries.extend(p for p in glob.glob(path) if p not in binaries)
             for binary in binaries:
                 # Skiplist
                 norun = False
