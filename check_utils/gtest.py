@@ -132,9 +132,7 @@ class GTest(BinaryTest):
                         self.errored_tests.append(case_full)
 
                         errored_cases.append(ErroredCase(case, '',
-                                                         datetime.datetime\
-                                                                 .now()\
-                                                                 .isoformat(),
+                                                         '0.0',
                                                          '0',
                                                          stderr,
                                                          ''))
