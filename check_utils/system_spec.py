@@ -22,7 +22,7 @@ class SystemSpec:
     @classmethod
     def from_uname(cls):
         status, output = subprocess.getstatusoutput('uname -a')
-        if not (os.WIFEXITED(status) and (os.WEXITSTATUS(status) == 0)):
+        if status:
             raise subprocess.CalledProcessError('uname command failed.',
                                                 cmd='uname -a')
 

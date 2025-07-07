@@ -4,6 +4,7 @@ Provides common base class definitions for creating test runner objects.
 
 from abc import ABC, abstractmethod
 import glob
+import os
 import logging
 from pathlib import Path
 from typing import List, Optional, Callable, Generator
@@ -138,20 +139,24 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
         framework_config = config.get(cls.get_name_framework(), None)
         if framework_config is not None:
             binaries = []
-            for path in framework_config.get('path', '').splitlines():
-                binaries.extend(p for p in glob.glob(path) if p not in binaries)
+            path = framework_config.get('path', '')
+            path += '/**/*'
+            binaries = [p for p in glob.glob(path, recursive=True) if os.path.isfile(p)]
+
+            skip_objs_path: dict[Path, Skipped] = {}
+            for skip_iter in framework_config.get('skipped', []):
+                skip_obj: Skipped = Skipped.make_from_dict(skip_iter)
+                skip_objs_path[Path(skip_obj.get_name())] = skip_obj
+
             for binary in binaries:
                 # Skiplist
                 norun = False
                 skipped: Optional[Skipped] = None
-                for skip_iter in framework_config.get('skipped', []):
-                    skip_obj: Skipped = Skipped.make_from_dict(skip_iter)
-                    if Path(skip_obj.get_name()) == Path(binary):
-                        if skip_obj.is_not_run():
-                            # Test is not run.
-                            norun = True
-                            break
-                        skipped = skip_obj.filter_tests(spec)
+                binary_path = Path(binary)
+                if binary_path in skip_objs_path and \
+                  skip_objs_path[binary_path].is_not_run():
+                    norun = True
+                    skipped = skip_objs_path[binary_path].filter_tests(spec)
                 if norun:
                     logging.info('Skipping binary %s.', binary)
                     continue
@@ -179,14 +184,16 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
     Abstract class for a factory which produces test instances of the derived
     class which correspond to a project-level test runner.
     """
+    path: str = ''
     opts: str = ''
     skipped: List[SkippedSuite] = []
     timeout: Optional[int] = None
 
-    def __init__(self,
+    def __init__(self, path: str,
                  report: str, output: str, opts: str,
                  skipped: List[SkippedSuite], timeout: Optional[int] = None):
         super().__init__(report, output)
+        self.path = path
         self.opts = opts
         self.skipped = skipped
         self.timeout = timeout
@@ -204,19 +211,21 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
                      cls.get_name_framework())
         framework_config = config.get(cls.get_name_framework(), None)
         if framework_config is not None:
+            path = framework_config.get('path', '')
             skipped = framework_config.get('skipped', [])
             skipped_suites = []
-            for suite in skipped.get('suites', []):
-                skipped_suite = SkippedSuite.make_from_dict(suite)\
-                        .filter_tests(spec)
-                if skipped_suite is not None:
-                    skipped_suites.append(skipped_suite)
+            if len(skipped) != 0:
+                for suite in skipped.get('suites', []):
+                    skipped_suite = SkippedSuite.make_from_dict(suite) \
+                            .filter_tests(spec)
+                    if skipped_suite is not None:
+                        skipped_suites.append(skipped_suite)
 
             opts = framework_config.get('opt', '')
 
             report = report_f('')
 
-            yield cls(report, output, opts, skipped_suites,
+            yield cls(path, report, output, opts, skipped_suites,
                       config.get('timeout', None))
         else:
             logging.info('Could not find configuration for framework %s.',

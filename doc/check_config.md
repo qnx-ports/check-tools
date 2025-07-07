@@ -36,6 +36,7 @@ and a project level test.toml file that applies to all packages containing
 preset defaults.
 
 Do we want to skip entire files on an arch or os basis?
+
 ```toml
 # test.toml
 
@@ -43,15 +44,12 @@ package = "name"
 timeout = 1800 # Timeout per test file in seconds
 # Prefer not to modify. Set to startdir by default.
 out_dir = "."
-jobs = 4
 
 # Frameworks abstracted to include those run at project level and those run at
 # binary level.
 # Rules for each binary test framework
 [googletest]
-path = """
-build/test/*
-build/bin/*""" # glob, so we can automatically test new releases.
+path = "build" # path to folder containing tests
 
 [[googletest.opts]]
 name = "common"
@@ -85,7 +83,8 @@ norun = true # Will not be added to the test report.
 
 # Rules for each project test framework
 [pytest]
-opt = "--non-default-option"
+path = "build" # path to test folder
+opt = "--non-default-option" # example '-n 4' for running 4 parallel jobs on different cores
 [[pytest.skipped.suites]]
 name = "suite1"
 [[pytest.skipped.suites.cases]]
@@ -119,4 +118,3 @@ arch = [
 [[custom.skipped]]
 name = "case2" # Skip on all targets.
 ```
-
