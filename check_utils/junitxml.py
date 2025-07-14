@@ -5,6 +5,7 @@ Tools for parsing logs and creating/manipulating JUnitXML files.
 import copy
 import datetime
 from pathlib import Path
+import logging
 from typing import List, Optional, Self
 import xml.etree.ElementTree as ET
 
@@ -28,7 +29,14 @@ class JUnitXML:
             raise IllegalArgumentError('JUnitXML supplied invalid '
                                                    'file path.')
         else:
-            self._tree = ET.parse(file)
+            try:
+                self._tree = ET.parse(file)
+            except ET.ParseError as e:
+                # Might have been given an empty file. Continue as normal.
+                logging.warning('JUnitXML Failed with error (%s) for report file %s.',
+                                str(e), file)
+                logging.warning('Continuing with an empty xml object.')
+                self._tree = JUnitXML.make_from_passed([]).tree
 
         if self._tree is not None:
             JUnitXML._standardize_tree(self._tree)
@@ -38,7 +46,14 @@ class JUnitXML:
             raise IllegalArgumentError('JUnitXML supplied invalid '
                                                    'file path.')
         else:
-            self._tree = ET.parse(file)
+            try:
+                self._tree = ET.parse(file)
+            except ET.ParseError as e:
+                # Might have been given an empty file. Continue as normal.
+                logging.warning('JUnitXML Failed with error (%s) for report file %s.',
+                                str(e), file)
+                logging.warning('Continuing with an empty xml object.')
+                self._tree = JUnitXML.make_from_passed([]).tree
 
         if self._tree is not None:
             JUnitXML._standardize_tree(self._tree)
