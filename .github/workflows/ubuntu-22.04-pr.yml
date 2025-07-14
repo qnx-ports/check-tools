@@ -34,6 +34,7 @@ jobs:
           pytest tests/
 
       - name: Generate coverage report
+        if: ${{ always() }}
         run: |
           pytest --junitxml=report.xml --cov-report=term-missing:skip-covered --cov=check_utils tests/ > coverage.txt
 
