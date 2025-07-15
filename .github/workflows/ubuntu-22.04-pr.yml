@@ -31,8 +31,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest --junitxml=report.xml --cov-report=term-missing:skip-covered --cov=tests tests/ > coverage.txt
-
+          pytest --junitxml=report.xml --cov-report=term-missing:skip-covered --cov=check_utils tests/ | tee coverage.txt 2>&1
       - name: Pytest coverage comment
         if: ${{ always() }}
         uses: MishaKav/pytest-coverage-comment@v1
