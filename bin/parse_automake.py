@@ -26,7 +26,7 @@ passed_cases: List[cu.PassedCase] = []
 failed_cases: List[cu.FailedCase] = []
 
 skipped_suites = [skipped_obj
-                  for skipped_config in config_obj['custom']['skipped']['suites']
+                  for skipped_config in config_obj.get('custom', dict()).get('skipped', dict()).get('suites', [])
                   if (skipped_obj := cu.SkippedSuite.make_from_dict(skipped_config).filter_tests(cu.SystemSpec.from_uname())) is not None]
 
 with open(config_obj['out_dir'] + '/' + config_obj['package'] + '.txt', 'w') as out:
