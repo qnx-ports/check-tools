@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "check_utils"
-version = "0.1.2_dev"
+version = "0.1.2"
 
 [tool.pylint."MESSAGES CONTROL"]
 
