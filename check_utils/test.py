@@ -153,10 +153,10 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
                 norun = False
                 skipped: Optional[Skipped] = None
                 binary_path = Path(binary)
-                if binary_path in skip_objs_path and \
-                  skip_objs_path[binary_path].is_not_run():
+                if binary_path in skip_objs_path:
+                  if skip_objs_path[binary_path].is_not_run():
                     norun = True
-                    skipped = skip_objs_path[binary_path].filter_tests(spec)
+                  skipped = skip_objs_path[binary_path].filter_tests(spec)
                 if norun:
                     logging.info('Skipping binary %s.', binary)
                     continue

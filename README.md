@@ -1,16 +1,17 @@
 # check-tools
+
 [![Build](https://github.com/qnx-ports/check-tools/actions/workflows/ubuntu-22.04.yml/badge.svg)](https://github.com/qnx-ports/check-tools/actions/workflows/ubuntu-22.04.yml)
 
 Tools for writing the APKBUILD check() function.
 
 ## Project Contents
 
-- `doc`/:         Design documentation, guides, and help.
+- `doc`/: Design documentation, guides, and help.
 - `check_utils/`: The python module for writing test log parsers for producing
-                  JUnitXML reports.
+  JUnitXML reports.
 - `bin/check.py`: Tool for reading package configuration, forwarding arguments
-                  to the corresponding test framework, formatting JUnitXML
-                  output, and returning the result of the test run.
+  to the corresponding test framework, formatting JUnitXML
+  output, and returning the result of the test run.
 
 ## Get Started
 
@@ -24,6 +25,7 @@ export PATH=$PATH:$PWD/bin
 ```
 
 ## Run the Tests
+
 ```bash
 python3 -m pip install -r tests/requirements.txt
 pytest
@@ -35,6 +37,7 @@ As the self hosted process for QNX is still early in development, support for
 many test frameworks still needs to be added.
 
 The current progress for `bin/check.py`:
+
 - googletest:
   - [x] Workflow is implemented.
   - [x] Workflow is verified on linux.
@@ -58,8 +61,8 @@ The current progress for `bin/check.py`:
   - [ ] Can execute a custom number of jobs in parallel.
 - pytest:
   - [x] Workflow is implemented.
-  - [ ] Workflow is verified on linux.
+  - [x] Workflow is verified on linux.
   - [ ] Workflow is verified on QNX.
-  - [ ] Skipped tests are added to the resulting JUnitXML.
-  - [ ] Errored tests are added to the resulting JUnitXML.
-  - [ ] Can execute a custom number of jobs in parallel.
+  - [x] Skipped tests are added to the resulting JUnitXML.
+  - [x] Errored tests are added to the resulting JUnitXML.
+  - [x] Can execute a custom number of jobs in parallel.

@@ -7,6 +7,7 @@ import subprocess
 from typing import List
 
 from .test import ProjectTest
+from .junitxml import JUnitXML
 
 class PyTest(ProjectTest):
     """
@@ -17,12 +18,13 @@ class PyTest(ProjectTest):
     def _run_pytest(self) -> None:
         command = ('pytest '
                    f'--junit-xml={self.report} '
+                   f'-o junit-family=xunit1'
                    f'{self.opts} {self.path}')
         if len(self.skipped) != 0:
             case_names = [case
                           for s in self.skipped for case in s.get_case_names()]
             formatted_skipped = [f'not {case}' for case in case_names]
-            command += '-k "' + ' and '.join(formatted_skipped) + '" '
+            command += ' -k "' + ' and '.join(formatted_skipped) + '" '
         logging.info("PyTest running command: %s", command)
         with open(self.get_output(), 'a', encoding="utf-8") as output_f:
             subprocess.run(
@@ -33,6 +35,16 @@ class PyTest(ProjectTest):
                     check=False,
                     shell=True
             )
+
+    def _report_skipped_tests(self) -> None:
+        if len(self.skipped) != 0:
+            report_xml = JUnitXML(file=self.report)
+
+            skipped_xml = JUnitXML.make_from_skipped(self.skipped)
+
+            report_xml += skipped_xml
+
+            report_xml.write(self.report)
 
     @classmethod
     def get_name_framework(cls) -> str:
