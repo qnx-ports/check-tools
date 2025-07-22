@@ -170,7 +170,7 @@ class Skipped:
         return self.suites
 
     def is_empty(self):
-        if self.suites is not None:
+        if len(self.suites) != 0:
             for suite in self.suites:
                 if len(suite.get_cases()) != 0:
                     return False

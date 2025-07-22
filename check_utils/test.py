@@ -214,7 +214,7 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
             path = framework_config.get('path', '')
             skipped = framework_config.get('skipped', [])
             skipped_suites = []
-            if len(skipped) != 0:
+            if not skipped:
                 for suite in skipped.get('suites', []):
                     skipped_suite = SkippedSuite.make_from_dict(suite) \
                             .filter_tests(spec)

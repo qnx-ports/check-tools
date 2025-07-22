@@ -100,6 +100,23 @@ arch = [
 [[pytest.skipped.suites.cases]]
 name = "case2" # Skip on all targets.
 
+[[meson.skipped.suites]]
+name = "mysuite"
+
+[[meson.skipped.suites.cases]]
+name = "case4"
+os = [
+    "7.1.0", # Skip on 7.1.0 targets.
+    "8.0.0"
+]
+arch = [
+    "aarch64le",
+    "x86_64"
+]
+[[meson.skipped.suites.cases]]
+name = "skipall" # Skipped on all targets
+
+
 # Ignored by check.py
 # Manually handle test running and all custom parsing, using your own
 # configuration.
