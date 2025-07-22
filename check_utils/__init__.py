@@ -16,12 +16,14 @@ from .gtest import GTest
 from .catch2test import Catch2Test
 from .pytest import PyTest
 from .mesontest import MesonTest
+from .qttest import QtTest
 
 from typing import Final
 
 TEST_FRAMEWORK_BUILTINS: Final[TestGenerator] = [
         GTest,
         Catch2Test,
+        QtTest,
         PyTest,
         MesonTest
         ]

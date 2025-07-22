@@ -49,6 +49,13 @@ The current progress for `bin/check.py`:
   - [ ] Skipped tests are added to the resulting JUnitXML.
   - [ ] Errored tests are added to the resulting JUnitXML.
   - [ ] Can execute a custom number of jobs in parallel.
+- qt-test:
+  - [x] Workflow is implemented.
+  - [ ] Workflow is verified on linux.
+  - [x] Workflow is verified on QNX.
+  - [x] Skipped tests are added to the resulting JUnitXML.
+  - [ ] Errored tests are added to the resulting JUnitXML.
+  - [ ] Can execute a custom number of jobs in parallel.
 - meson:
   - [x] Workflow is implemented.
   - [ ] Workflow is verified on linux.
