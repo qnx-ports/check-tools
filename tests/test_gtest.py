@@ -137,6 +137,8 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
     assert not Path(STDERR_FILE).exists()
     assert Path(report_file).exists()
 
+    assert False
+
 @patch.object(tempfile, 'mkstemp', MkstempMockWrapper.mkstemp_mock)
 def test__run_gtest_skipped1(mocker, report_file, output_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
