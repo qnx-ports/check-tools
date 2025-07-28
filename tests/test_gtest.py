@@ -10,8 +10,7 @@ import tempfile
 from typing import Final
 from unittest.mock import ANY, patch
 
-from check_utils import GTest, Skipped, JUnitXML
-from check_utils.test import TestMeta
+from check_utils import GTest, Skipped, JUnitXML, TestMeta
 import common
 
 OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'

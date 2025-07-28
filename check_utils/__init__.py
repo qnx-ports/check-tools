@@ -5,7 +5,7 @@ from .definitions import IllegalArgumentError, InvalidSubprocessResultError,\
                 CheckExit, BUILD_DIR, START_DIR, PROJECT_DIR, PACKAGE_CONFIG,\
                 PROJECT_CONFIG
 from .test import GenericTest, TestGenerator, BinaryTest, ProjectTest,\
-        TestJobset
+        TestJobset, TestMeta
 from .system_spec import SystemSpec
 from .skipped import Skipped, SkippedCase, SkippedSuite
 from .failed import FailedCase, FailedSuite
@@ -46,6 +46,7 @@ __all__ = [
         'BinaryTest',
         'ProjectTest',
         'TestJobset',
+        'TestMeta',
         'SystemSpec',
         'Skipped',
         'SkippedCase',
