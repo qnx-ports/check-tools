@@ -5,12 +5,15 @@ Tools for writing the APKBUILD check() function.
 
 ## Project Contents
 
-- `doc`/:         Design documentation, guides, and help.
-- `check_utils/`: The python module for writing test log parsers for producing
-                  JUnitXML reports.
-- `bin/check.py`: Tool for reading package configuration, forwarding arguments
-                  to the corresponding test framework, formatting JUnitXML
-                  output, and returning the result of the test run.
+- `doc`/:           Design documentation, guides, and help.
+- `check_utils/`:   The python module for writing test log parsers for producing
+                    JUnitXML reports.
+- `bin/check.sh`:   Tool for reading package configuration, forwarding arguments
+                    to the corresponding test framework, formatting JUnitXML
+                    output, and returning the result of the test run.
+- `bin/parse_*.sh`: Scripts for reading package configuration, parsing stdout of
+                    a test program, formatting JUnitXML output, and returning
+                    the result of the test run.
 
 ## Get Started
 
