@@ -2,16 +2,18 @@
 Unit tests for pytest.py
 """
 
+import os
 from pathlib import Path
 import pytest
 import subprocess
+import tempfile
 from typing import Final
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
-from check_utils import PyTest, SkippedSuite, BUILD_DIR
+from check_utils import PyTest, SkippedSuite, JUnitXML, TestMeta
 import common
 
-REPORT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.xml'
+MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
 OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
 
 @pytest.fixture()
@@ -28,32 +30,25 @@ def output_file():
     if (output_path.exists()):
         output_path.unlink()
 
-@pytest.fixture()
-def report_file():
-    report_path = Path(REPORT_FILE)
+def mkstemp_mock(suffix: str = None):
+    tmp_xml = JUnitXML.make_from_passed([])
+    tmp_xml.write(MKSTEMP_REPORT_FILE)
+    return (os.open(MKSTEMP_REPORT_FILE, os.O_RDWR | os.O_CREAT), MKSTEMP_REPORT_FILE)
 
-    # Setup
-    if (report_path.exists()):
-        report_path.unlink()
-
-    yield REPORT_FILE
-
-    # Teardown
-    if (report_path.exists()):
-        report_path.unlink()
-
-@pytest.mark.parametrize('opts,timeout', [
-    ('', None), ('--my-custom-opt1 --my-custom-opt2', None),
-    ('', 300), ('--my-custom-opt1 --my-custom-opt2', 300)
+@patch.object(tempfile, 'mkstemp', mkstemp_mock)
+@pytest.mark.parametrize('opts,timeout,num_jobs', [
+    ('', None, 1), ('--my-custom-opt1 --my-custom-opt2', None, 2),
+    ('', 300, 3), ('--my-custom-opt1 --my-custom-opt2', 300, 4)
     ])
-def test__run_pytest(mocker, report_file, output_file, opts, timeout):
-    pytest = PyTest(REPORT_FILE, output_file, opts,
-                          [], timeout)
+def test__run_pytest(mocker, output_file, opts, timeout, num_jobs):
+    meta = TestMeta(PyTest)
+    pytest = PyTest(output_file, opts, meta, timeout)
+    pytest.set_num_jobs(num_jobs)
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'pytest --junit-xml={report_file} {opts} ',
+            'args': f'pytest --junit-xml={MKSTEMP_REPORT_FILE} -n {num_jobs} {opts} ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
@@ -65,7 +60,8 @@ def test__run_pytest(mocker, report_file, output_file, opts, timeout):
 
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
-def test__run_mesontest_skipped(mocker, report_file, output_file):
+@patch.object(tempfile, 'mkstemp', mkstemp_mock)
+def test__run_mesontest_skipped(mocker, output_file):
     skip_list = [
             SkippedSuite.make_from_dict(
                 {
@@ -95,13 +91,13 @@ def test__run_mesontest_skipped(mocker, report_file, output_file):
                                 'arch': ['x86_64']
                             }]})
             ]
-    pytest = PyTest(REPORT_FILE, output_file, '',
-                          skip_list, None)
+    meta = TestMeta(PyTest, skipped=skip_list)
+    pytest = PyTest(output_file, '', meta, None)
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'pytest --junit-xml={report_file}  -k "not test_foo1 and not test_foo2 and not test_foo3" ',
+            'args': f'pytest --junit-xml={MKSTEMP_REPORT_FILE} -n 1  -k "not test_foo1 and not test_foo2 and not test_foo3" ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
@@ -112,6 +108,9 @@ def test__run_mesontest_skipped(mocker, report_file, output_file):
     pytest._run_pytest()
 
     subprocess.run.assert_called_once_with(**expected_kwargs)
+
+def test_should_report_skipped_tests():
+    assert not PyTest.should_report_skipped_tests()
 
 def test_get_name_framework():
     assert PyTest.get_name_framework() == 'pytest'

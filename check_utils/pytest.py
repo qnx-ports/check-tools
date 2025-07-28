@@ -26,9 +26,10 @@ class PyTest(ProjectTest):
                    f'--junit-xml={tmp_report} '
                    f'-n {self.num_jobs} '
                    f'{self.opts} ')
-        if len(self.skipped) != 0:
+        if len(self.meta.get_skipped()) != 0:
             case_names = [case
-                          for s in self.skipped for case in s.get_case_names()]
+                          for s in self.meta.get_skipped()
+                          for case in s.get_case_names()]
             formatted_skipped = [f'not {case}' for case in case_names]
             command += '-k "' + ' and '.join(formatted_skipped) + '" '
         logging.info("PyTest running command: %s", command)

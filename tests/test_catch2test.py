@@ -30,20 +30,6 @@ def output_file():
     if (output_path.exists()):
         output_path.unlink()
 
-@pytest.fixture()
-def report_file():
-    report_path = Path(MKSTEMP_REPORT_FILE)
-
-    # Setup
-    if (report_path.exists()):
-        report_path.unlink()
-
-    yield MKSTEMP_REPORT_FILE
-
-    # Teardown
-    if (report_path.exists()):
-        report_path.unlink()
-
 def mkstemp_mock(suffix: str = None):
     tmp_xml = JUnitXML.make_from_passed([])
     tmp_xml.write(MKSTEMP_REPORT_FILE)
