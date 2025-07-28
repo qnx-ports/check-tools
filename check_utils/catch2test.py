@@ -44,6 +44,10 @@ class Catch2Test(BinaryTest):
         return report_xml
 
     @classmethod
+    def should_report_skipped_tests(cls) -> None:
+        return False
+
+    @classmethod
     def get_name_framework(cls) -> str:
         return 'catch2'
 

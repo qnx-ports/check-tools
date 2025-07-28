@@ -24,7 +24,7 @@ class PyTest(ProjectTest):
 
         command = ('pytest '
                    f'--junit-xml={tmp_report} '
-                   f'-n {self.num_jobs}'
+                   f'-n {self.num_jobs} '
                    f'{self.opts} ')
         if len(self.skipped) != 0:
             case_names = [case
@@ -45,6 +45,10 @@ class PyTest(ProjectTest):
         report_xml = JUnitXML(file=tmp_report)
         Path(tmp_report).unlink()
         return report_xml
+
+    @classmethod
+    def should_report_skipped_tests(cls) -> None:
+        return False
 
     @classmethod
     def get_name_framework(cls) -> str:
