@@ -27,11 +27,26 @@ def output_file():
     if (output_path.exists()):
         output_path.unlink()
 
+@pytest.fixture()
+def xml_test_log_file():
+    xml_test_log_path = BUILD_DIR.joinpath(MesonTest.XML_TEST_LOG)
+    xml_test_log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Setup
+    if (xml_test_log_path.exists()):
+        xml_test_log_path.unlink()
+
+    yield str(xml_test_log_path)
+
+    # Teardown
+    if (xml_test_log_path.exists()):
+        xml_test_log_path.unlink()
+
 @pytest.mark.parametrize('opts,timeout,num_jobs', [
     ('', None, 1), ('--my-custom-opt1 --my-custom-opt2', None, 2),
     ('', 300, 3), ('--my-custom-opt1 --my-custom-opt2', 300, 4)
     ])
-def test__run_mesontest(mocker, output_file, opts, timeout, num_jobs):
+def test__run_mesontest(mocker, output_file, xml_test_log_file, opts, timeout, num_jobs):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'foo1:bar1 / testdir1/test1\n'
@@ -44,8 +59,7 @@ def test__run_mesontest(mocker, output_file, opts, timeout, num_jobs):
     mesontest.set_num_jobs(num_jobs)
 
     # Initialize test report that would normally be created by meson.
-    JUnitXML.make_from_passed([]).write(
-            BUILD_DIR.joinpath(MesonTest.XML_TEST_LOG))
+    JUnitXML.make_from_passed([]).write(xml_test_log_file)
 
     mocker.patch('subprocess.run')
 
@@ -62,7 +76,7 @@ def test__run_mesontest(mocker, output_file, opts, timeout, num_jobs):
 
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
-def test__run_mesontest_skipped(mocker, output_file):
+def test__run_mesontest_skipped(mocker, output_file, xml_test_log_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'foo1:bar1 / testdir1/test1\n'
@@ -104,8 +118,7 @@ def test__run_mesontest_skipped(mocker, output_file):
     mesontest = MesonTest(output_file, '', meta, None)
 
     # Initialize test report that would normally be created by meson.
-    JUnitXML.make_from_passed([]).write(
-            BUILD_DIR.joinpath(MesonTest.XML_TEST_LOG))
+    JUnitXML.make_from_passed([]).write(xml_test_log_file)
 
     mocker.patch('subprocess.run')
 

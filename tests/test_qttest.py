@@ -176,6 +176,9 @@ def test__run_qttest_skipped2(mocker, output_file, blacklist_file):
                          '[case3]\n'
                          'qnx\n')
 
+def test_should_report_skipped_tests():
+    assert not QtTest.should_report_skipped_tests()
+
 def test_get_name_framework():
     assert QtTest.get_name_framework() == 'qt-test'
 
