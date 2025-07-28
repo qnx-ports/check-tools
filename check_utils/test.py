@@ -20,8 +20,7 @@ class GenericTest(ABC):
     Abstract class for a runnable test which produces a junit xml report and
     command-line output file.
     """
-    output: str = ''
-
+    # FIXME: Disabled to enable concurrency.
     def __init__(self, output):
         self.output = output
 
@@ -175,7 +174,7 @@ class TestGenerator(ABC):
             output: str,
             spec: SystemSpec,
             config: Config,
-            ) -> TestJobset:
+            ) -> Optional[TestJobset]:
         """
         Generate test instances.
 
@@ -221,7 +220,7 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
             output: str,
             spec: SystemSpec,
             config: Config,
-            ) -> TestJobset:
+            ) -> Optional[TestJobset]:
         logging.info('Generating binary test list for %s.',
                      cls.get_name_framework())
         tests: List[GenericTest] = []
@@ -235,12 +234,13 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
             meta = TestMeta(cls)
             for skip_iter in framework_config.get('skipped', []):
                 skip_obj: Skipped = Skipped.make_from_dict(skip_iter)
-                skipped = skip_obj.filter_tests(spec)
-                if skipped is not None:
-                    if skipped.is_not_run():
-                        meta.add_not_run(skipped.get_name())
+                if skip_obj is not None:
+                    if skip_obj.is_not_run():
+                        meta.add_not_run(skip_obj.get_name())
                     else:
-                        meta.extend_skipped(skipped.get_suites())
+                        skipped = skip_obj.filter_tests(spec)
+                        if skipped is not None:
+                            meta.extend_skipped(skipped.get_suites())
 
             for binary in binaries:
                 if meta.is_not_run(binary):
@@ -261,10 +261,11 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
                 tests.extend(cls._generate_test_list(binary, output, opts,
                                                    meta,
                                                    config.get('timeout', None)))
+            return BinaryTestJobset(meta, tests)
         else:
             logging.info('Could not find configuration for framework %s.',
                          cls.get_name_framework())
-        return BinaryTestJobset(meta, tests)
+        return None
 
     # --- PRIVATE ---
     @classmethod
@@ -304,7 +305,7 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
             output: str,
             spec: SystemSpec,
             config: Config,
-            ) -> TestJobset:
+            ) -> Optional[TestJobset]:
         logging.info('Generating project test list for %s.',
                      cls.get_name_framework())
         tests: List[GenericTest] = []
@@ -325,11 +326,12 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
 
             tests.append(cls(output, opts, skipped_suites,
                              config.get('timeout', None)))
+            return ProjectTestJobset(meta, tests)
         else:
             logging.info('Could not find configuration for framework %s.',
                          cls.get_name_framework())
 
-        return ProjectTestJobset(meta, tests)
+        return None
 
     def set_num_jobs(self, num_jobs: int):
         self.num_jobs = num_jobs

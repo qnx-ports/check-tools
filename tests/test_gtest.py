@@ -13,7 +13,6 @@ from unittest.mock import ANY, patch
 from check_utils import GTest, Skipped, JUnitXML
 import common
 
-REPORT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.xml'
 OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
 MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
 PREMATURE_EXIT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}_exit'

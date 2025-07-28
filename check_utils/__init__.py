@@ -4,7 +4,8 @@ from .junitxml import JUnitXML
 from .definitions import IllegalArgumentError, InvalidSubprocessResultError,\
                 CheckExit, BUILD_DIR, START_DIR, PROJECT_DIR, PACKAGE_CONFIG,\
                 PROJECT_CONFIG
-from .test import GenericTest, TestGenerator, BinaryTest, ProjectTest
+from .test import GenericTest, TestGenerator, BinaryTest, ProjectTest,\
+        TestJobset
 from .system_spec import SystemSpec
 from .skipped import Skipped, SkippedCase, SkippedSuite
 from .failed import FailedCase, FailedSuite
@@ -44,6 +45,7 @@ __all__ = [
         'TestGenerator',
         'BinaryTest',
         'ProjectTest',
+        'TestJobset',
         'SystemSpec',
         'Skipped',
         'SkippedCase',

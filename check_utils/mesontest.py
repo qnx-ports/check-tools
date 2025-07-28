@@ -66,7 +66,7 @@ class MesonTest(ProjectTest):
         command = (f'meson test {" ".join(run_tests)} -C {BUILD_DIR} -j '
                    f'{self.num_jobs} {self.opts}')
         logging.info("MesonTest running command: %s", command)
-        with open(self.get_output(), 'a', encoding="utf-8") as output_f:
+        with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
                     stderr=output_f,

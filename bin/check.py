@@ -61,11 +61,13 @@ class Main:
         """
         spec = check_utils.SystemSpec.from_uname()
         for test_framework in check_utils.TEST_FRAMEWORK_BUILTINS:
-            yield test_framework.make_test_jobset(
+            jobset = test_framework.make_test_jobset(
                     output,
                     spec,
                     self.config_obj
                     )
+            if jobset is not None:
+                yield jobset
 
     # --- PUBLIC ---
     def is_success(self, report: str) -> bool:
@@ -111,12 +113,12 @@ class Main:
                         self.config_obj['package'],
                         extension='.txt'
                         )
-        num_jobs: int = self.config_obj['jobs']
+        num_jobs: int = self.config_obj.get('jobs', 1)
         logging.info('Reporting results in %s.', report)
         logging.info('Reporting output in %s.', output)
         logging.info('Using %d jobs.', num_jobs)
 
-        combined_report_obj = check_utils.JUnitXML.make_from_passed()
+        combined_report_obj = check_utils.JUnitXML.make_from_passed([])
         is_empty = True
         for test in self._generate_test_jobsets(output):
             is_empty = False

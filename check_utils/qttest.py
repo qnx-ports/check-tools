@@ -34,7 +34,7 @@ class QtTest(BinaryTest):
                     f.write(f'\n[{case_name}]\nqnx\n')
 
         logging.info("QtTest running command: %s", command)
-        with open(self.get_output(), 'a', encoding="utf-8") as output_f:
+        with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
                     stderr=output_f,

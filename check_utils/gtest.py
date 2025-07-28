@@ -37,7 +37,7 @@ class GTest(BinaryTest):
                                     GenericTest, None, None]:
         # Googletest uniquely identifies tests with the pattern `<suite>.<case>`
         skipped_tests = []
-        for suite in TestMeta.get_skipped():
+        for suite in meta.get_skipped():
             skipped_tests += [suite.get_name() + '.' + case_name
                               for case_name in suite.get_case_names()]
 
@@ -79,31 +79,31 @@ class GTest(BinaryTest):
 
     def _run_gtest(self) -> None:
         report_xml: Optional[JUnitXML] = None
-        with open(self.get_output(), 'a', encoding="utf-8") as output_f:
-            # Suite timestamp
-            timestamp = datetime.datetime.now().isoformat()
+        # Suite timestamp
+        timestamp = datetime.datetime.now().isoformat()
 
-            case_full = self.suite + '.' + self.case
+        case_full = self.suite + '.' + self.case
 
-            f, tmp_report = tempfile.mkstemp(suffix='.xml')
-            os.close(f)
+        f, tmp_report = tempfile.mkstemp(suffix='.xml')
+        os.close(f)
 
-            # Googletest uses a premature-exit-file to allow runner
-            # programs to detect premature exits. See:
-            # https://google.github.io/googletest/advanced.html
-            # We use this to detect errored cases.
-            f, tmp_premature_exit = tempfile.mkstemp()
-            os.close(f)
-            os.environ['TEST_PREMATURE_EXIT_FILE'] = tmp_premature_exit
+        # Googletest uses a premature-exit-file to allow runner
+        # programs to detect premature exits. See:
+        # https://google.github.io/googletest/advanced.html
+        # We use this to detect errored cases.
+        f, tmp_premature_exit = tempfile.mkstemp()
+        os.close(f)
+        os.environ['TEST_PREMATURE_EXIT_FILE'] = tmp_premature_exit
 
-            # subprocess.run does not support io.StringIO stderr
-            stderr_f, tmp_stderr = tempfile.mkstemp()
+        # subprocess.run does not support io.StringIO stderr
+        stderr_f, tmp_stderr = tempfile.mkstemp()
 
-            command = (f'./{self.binary} '
-                       f'--gtest_output="xml:{tmp_report}" '
-                       f'--gtest_filter="{case_full}" '
-                       f'{self.opts}')
-            logging.info("GTest running command: %s", command)
+        command = (f'./{self.binary} '
+                   f'--gtest_output="xml:{tmp_report}" '
+                   f'--gtest_filter="{case_full}" '
+                   f'{self.opts}')
+        logging.info("GTest running command: %s", command)
+        with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
                     stdout=output_f,
@@ -112,37 +112,36 @@ class GTest(BinaryTest):
                     check=False,
                     shell=True
             )
-            os.close(stderr_f)
-            if Path(tmp_premature_exit).exists():
-                stderr = ''
-                with open(tmp_stderr, 'r', encoding="utf-8") as f:
-                    stderr = f.read()
-                logging.info('%s terminated with err %s.', self.binary,
-                             stderr)
-                self.errored_tests.append(case_full)
+        os.close(stderr_f)
+        if Path(tmp_premature_exit).exists():
+            stderr = ''
+            with open(tmp_stderr, 'r', encoding="utf-8") as f:
+                stderr = f.read()
+            logging.info('%s terminated with err %s.', self.binary,
+                         stderr)
 
-                report_xml = JUnitXML\
-                        .make_from_errored(ErroredSuite(self.suite,
-                                                        '',
-                                                        timestamp,
-                                                        [ErroredCase(self.case,
-                                                                     '',
-                                                                     datetime.datetime\
-                                                                             .now()\
-                                                                             .isoformat(),
-                                                                     '0',
-                                                                     stderr,
-                                                                     '')]))
+            report_xml = JUnitXML\
+                    .make_from_errored([ErroredSuite(self.suite,
+                                                     '',
+                                                     timestamp,
+                                                     [ErroredCase(self.case,
+                                                                  '',
+                                                                  datetime.datetime\
+                                                                          .now()\
+                                                                          .isoformat(),
+                                                                  '0',
+                                                                  stderr,
+                                                                  '')])])
 
-                Path(tmp_premature_exit).unlink()
-                if Path(tmp_report).exists():
-                    Path(tmp_report).unlink()
-            else:
-                report_xml = JUnitXML(file=tmp_report)
-
+            Path(tmp_premature_exit).unlink()
+            if Path(tmp_report).exists():
                 Path(tmp_report).unlink()
+        else:
+            report_xml = JUnitXML(file=tmp_report)
 
-            Path(tmp_stderr).unlink()
+            Path(tmp_report).unlink()
+
+        Path(tmp_stderr).unlink()
 
         os.environ['TEST_PREMATURE_EXIT_FILE'] = ''
 

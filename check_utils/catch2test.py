@@ -29,7 +29,7 @@ class Catch2Test(BinaryTest):
             command += f'*,~{",~".join(self.skipped.get_case_names())} '
 
         logging.info("Catch2Test running command: %s", command)
-        with open(self.get_output(), 'a', encoding="utf-8") as output_f:
+        with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
                     stderr=output_f,
