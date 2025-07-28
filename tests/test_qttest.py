@@ -2,16 +2,18 @@
 Unit tests for catch2test.py
 """
 
+import os
 from pathlib import Path
 import pytest
 import subprocess
+import tempfile
 from typing import Final
-from unittest.mock import ANY
+from unittest.mock import ANY, patch
 
-from check_utils import QtTest, Skipped
+from check_utils import QtTest, Skipped, JUnitXML, TestMeta
 import common
 
-REPORT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.xml'
+MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
 OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
 BLACKLIST_FILE: Final[str] = './BLACKLIST'
 
@@ -30,20 +32,6 @@ def output_file():
         output_path.unlink()
 
 @pytest.fixture()
-def report_file():
-    report_path = Path(REPORT_FILE)
-
-    # Setup
-    if (report_path.exists()):
-        report_path.unlink()
-
-    yield REPORT_FILE
-
-    # Teardown
-    if (report_path.exists()):
-        report_path.unlink()
-
-@pytest.fixture()
 def blacklist_file():
     blacklist_path = Path(BLACKLIST_FILE)
 
@@ -57,17 +45,28 @@ def blacklist_file():
     if (blacklist_path.exists()):
         blacklist_path.unlink()
 
+def mkstemp_mock(suffix: str = None):
+    tmp_xml = JUnitXML.make_from_passed([])
+    tmp_xml.write(MKSTEMP_REPORT_FILE)
+    return (os.open(MKSTEMP_REPORT_FILE, os.O_RDWR | os.O_CREAT), MKSTEMP_REPORT_FILE)
+
+@patch.object(tempfile, 'mkstemp', mkstemp_mock)
 @pytest.mark.parametrize('opts,timeout', [
     ('', None), ('--my-custom-opt1 --my-custom-opt2', None),
     ('', 300), ('--my-custom-opt1 --my-custom-opt2', 300)
     ])
 def test__run_qttest(mocker, output_file, opts, timeout):
-    qttest = QtTest('bin', REPORT_FILE, output_file, opts, None, timeout)
+    meta = TestMeta(QtTest)
+    qttests = list(QtTest._generate_test_list('bin', output_file, opts, meta,
+                                              timeout))
+
+    assert len(qttests) == 1
+    qttest = qttests[0]
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'./bin -o {REPORT_FILE},junitxml {opts} ',
+            'args': f'./bin -o {MKSTEMP_REPORT_FILE},junitxml {opts} ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
@@ -81,14 +80,20 @@ def test__run_qttest(mocker, output_file, opts, timeout):
 
     assert not Path(BLACKLIST_FILE).exists()
 
+@patch.object(tempfile, 'mkstemp', mkstemp_mock)
 def test__run_qttest_skipped1(mocker, output_file):
     skipped = Skipped.make_from_dict({'name': 'bin1'})
-    qttest = QtTest('bin1', REPORT_FILE, output_file, '', skipped, None)
+    meta = TestMeta(QtTest, skipped=skipped.get_suites())
+    qttests = list(QtTest._generate_test_list('bin1', output_file, '', meta,
+                                              None))
+
+    assert len(qttests) == 1
+    qttest = qttests[0]
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'./bin1 -o {REPORT_FILE},junitxml  ',
+            'args': f'./bin1 -o {MKSTEMP_REPORT_FILE},junitxml  ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
@@ -102,6 +107,7 @@ def test__run_qttest_skipped1(mocker, output_file):
 
     assert not Path(BLACKLIST_FILE).exists()
 
+@patch.object(tempfile, 'mkstemp', mkstemp_mock)
 def test__run_qttest_skipped2(mocker, output_file, blacklist_file):
     skipped = Skipped.make_from_dict({
         'name': 'bin2',
@@ -132,13 +138,17 @@ def test__run_qttest_skipped2(mocker, output_file, blacklist_file):
                             'os': ['7.1.0'],
                             'arch': ['x86_64']
                         }]}]})
-    qttest = QtTest('bin2', REPORT_FILE, output_file, '',
-                            skipped, None)
+    meta = TestMeta(QtTest, skipped=skipped.get_suites())
+    qttests = list(QtTest._generate_test_list('bin2', output_file, '', meta,
+                                              None))
+
+    assert len(qttests) == 1
+    qttest = qttests[0]
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'./bin2 -o {REPORT_FILE},junitxml  -skipblacklisted ',
+            'args': f'./bin2 -o {MKSTEMP_REPORT_FILE},junitxml  -skipblacklisted ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,

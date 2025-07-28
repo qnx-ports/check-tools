@@ -27,11 +27,12 @@ class QtTest(BinaryTest):
         command = (f'./{self.binary} '
                    f'-o {tmp_report},junitxml '
                    f'{self.opts} ')
-        if self.skipped is not None and not self.skipped.is_empty():
+        if len(self.meta.get_skipped()) != 0:
             command += '-skipblacklisted '
             with Path(self.binary).parent.joinpath('BLACKLIST').open('a') as f:
-                for case_name in self.skipped.get_case_names():
-                    f.write(f'\n[{case_name}]\nqnx\n')
+                for skipped in self.meta.get_skipped():
+                    for case_name in skipped.get_case_names():
+                        f.write(f'\n[{case_name}]\nqnx\n')
 
         logging.info("QtTest running command: %s", command)
         with open('/dev/null', 'w') as output_f:
