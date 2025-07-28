@@ -38,10 +38,10 @@ The current progress for `bin/check.py`:
 - googletest:
   - [x] Workflow is implemented.
   - [x] Workflow is verified on linux.
-  - [ ] Workflow is verified on QNX.
+  - [x] Workflow is verified on QNX.
   - [x] Skipped tests are added to the resulting JUnitXML.
   - [x] Errored tests are added to the resulting JUnitXML.
-  - [ ] Can execute a custom number of jobs in parallel.
+  - [x] Can execute a custom number of jobs in parallel.
 - catch2:
   - [x] Workflow is implemented.
   - [ ] Workflow is verified on linux.
@@ -62,11 +62,11 @@ The current progress for `bin/check.py`:
   - [ ] Workflow is verified on QNX.
   - [ ] Skipped tests are added to the resulting JUnitXML.
   - [ ] Errored tests are added to the resulting JUnitXML.
-  - [ ] Can execute a custom number of jobs in parallel.
+  - [x] Can execute a custom number of jobs in parallel.
 - pytest:
   - [x] Workflow is implemented.
   - [ ] Workflow is verified on linux.
   - [ ] Workflow is verified on QNX.
   - [ ] Skipped tests are added to the resulting JUnitXML.
   - [ ] Errored tests are added to the resulting JUnitXML.
-  - [ ] Can execute a custom number of jobs in parallel.
+  - [x] Can execute a custom number of jobs in parallel.

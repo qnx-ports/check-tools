@@ -3,9 +3,13 @@ Provides definitions for running pytest tests.
 """
 
 import logging
+import os
+from pathlib import Path
 import subprocess
+import tempfile
 from typing import List
 
+from .junitxml import JUnitXML
 from .test import ProjectTest
 
 class PyTest(ProjectTest):
@@ -15,8 +19,12 @@ class PyTest(ProjectTest):
     errored: List[str] = []
 
     def _run_pytest(self) -> None:
+        f, tmp_report = tempfile.mkstemp(suffix='.xml')
+        os.close(f)
+
         command = ('pytest '
-                   f'--junit-xml={self.report} '
+                   f'--junit-xml={tmp_report} '
+                   f'-n {self.num_jobs}'
                    f'{self.opts} ')
         if len(self.skipped) != 0:
             case_names = [case
@@ -33,6 +41,10 @@ class PyTest(ProjectTest):
                     check=False,
                     shell=True
             )
+
+        report_xml = JUnitXML(file=tmp_report)
+        Path(tmp_report).unlink()
+        return report_xml
 
     @classmethod
     def get_name_framework(cls) -> str:

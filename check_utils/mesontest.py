@@ -8,9 +8,10 @@ from pathlib import Path
 import subprocess
 from typing import List, Optional, Final
 
-from .test import ProjectTest
-from .skipped import SkippedSuite
 from .definitions import BUILD_DIR
+from .junitxml import JUnitXML
+from .skipped import SkippedSuite
+from .test import ProjectTest
 
 class MesonTest(ProjectTest):
     """
@@ -21,10 +22,9 @@ class MesonTest(ProjectTest):
     errored: List[str] = []
     tests: List[str] = []
 
-    def __init__(self,
-                 report: str, output: str, opts: str,
+    def __init__(self, output: str, opts: str,
                  skipped: List[SkippedSuite], timeout: Optional[int] = None):
-        super().__init__(report, output, opts, skipped, timeout)
+        super().__init__(output, opts, skipped, timeout)
 
         # Meson doesn't have a way to exclude tests. We will need to filter
         # manually.
@@ -63,7 +63,8 @@ class MesonTest(ProjectTest):
 
         run_tests = [test for test in self.tests if test not in skipped_tests]
 
-        command = f'meson test {" ".join(run_tests)} -C {BUILD_DIR} {self.opts}'
+        command = (f'meson test {" ".join(run_tests)} -C {BUILD_DIR} -j '
+                   f'{self.num_jobs} {self.opts}')
         logging.info("MesonTest running command: %s", command)
         with open(self.get_output(), 'a', encoding="utf-8") as output_f:
             subprocess.run(
@@ -75,9 +76,10 @@ class MesonTest(ProjectTest):
                     shell=True
             )
 
-        # Meson outputs as JUnit XML automatically. We just need to rename it so
-        # that the rest of the program can find it.
-        BUILD_DIR.joinpath(self.XML_TEST_LOG).rename(self.report)
+        # Meson outputs as JUnit XML automatically.
+        # FIXME: Not currently cleaning up test paths...
+        report_xml = JUnitXML(file=str(BUILD_DIR.joinpath(self.XML_TEST_LOG)))
+        return report_xml
 
     @classmethod
     def get_name_framework(cls) -> str:

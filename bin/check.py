@@ -7,10 +7,8 @@ import argparse
 import datetime
 #from functools import cache
 import logging
-import os
 from pathlib import Path
 import sys
-import tempfile
 from typing import Generator
 
 import check_utils
@@ -49,67 +47,24 @@ class Main:
         """
         if extension[0] != '.':
             extension = '.' + extension
-        return '_'.join(args) + self.start_time + extension
+        return '_'.join(args) + extension
 
-    def _combine_congregate_report(self, congregate_report: str,
-                                   individual_report: str) -> None:
-        """
-        Combines the report result of an individual test into the congregate
-        report. Unlinks the individual report.
-
-        @param congregate_report: The congregate report.
-        @param individual_report: The report result of an individual test.
-        @raise check_utils.IllegalArgumentError: Provided an illegal argument.
-        """
-        if not Path(individual_report).exists()\
-                and Path(individual_report).is_file():
-            logging.error('%s does not exist!', individual_report)
-            raise check_utils.IllegalArgumentError('combine_congregate_report()'
-                                                   ' given path to empty '
-                                                   'JUnitXML file.')
-        if (congregate_report is not None) and Path(congregate_report).exists()\
-                and Path(congregate_report).is_file():
-            logging.info('Combining %s with result %s.',
-                             congregate_report, individual_report)
-
-            congregate_xml = check_utils.JUnitXML(congregate_report)
-
-            individual_xml = check_utils.JUnitXML(individual_report)
-
-            congregate_xml += individual_xml
-            congregate_xml.write(congregate_report)
-
-            # Cleanup temporary files.
-            Path(individual_report).unlink()
-        else:
-            logging.info('Renaming %s to %s.', individual_report,
-                             congregate_report)
-            Path(individual_report).rename(congregate_report)
-
-    def _generate_test_list(
+    def _generate_test_jobsets(
             self,
             output: str
-            ) -> Generator[check_utils.GenericTest, None, None]:
+            ) -> Generator[check_utils.TestJobset, None, None]:
         """
         Generate all tests to run.
 
         @param output: name of the command-line output file.
         @yield a test to run.
         """
-        def _report_f(binary):
-            f, tmp_report = tempfile.mkstemp(suffix='.xml')
-            os.close(f)
-            return tmp_report
-
         spec = check_utils.SystemSpec.from_uname()
         for test_framework in check_utils.TEST_FRAMEWORK_BUILTINS:
-            # We don't want to keep any generated reports, so provide a temp
-            # file instead.
-            yield from test_framework.generate_test_list(
+            yield test_framework.make_test_jobset(
                     output,
                     spec,
-                    self.config_obj,
-                    _report_f
+                    self.config_obj
                     )
 
     # --- PUBLIC ---
@@ -156,15 +111,18 @@ class Main:
                         self.config_obj['package'],
                         extension='.txt'
                         )
+        num_jobs: int = self.config_obj['jobs']
         logging.info('Reporting results in %s.', report)
         logging.info('Reporting output in %s.', output)
+        logging.info('Using %d jobs.', num_jobs)
 
+        combined_report_obj = check_utils.JUnitXML.make_from_passed()
         is_empty = True
-        for test in self._generate_test_list(output):
+        for test in self._generate_test_jobsets(output):
             is_empty = False
-            test.run()
-            self._combine_congregate_report(congregate_report = report,
-                                            individual_report = test.get_report())
+            combined_report_obj += test.run(num_jobs)
+
+        combined_report_obj.write(report)
 
         if is_empty:
             logging.warning("No tests were run!")

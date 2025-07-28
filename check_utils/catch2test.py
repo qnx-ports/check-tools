@@ -3,9 +3,13 @@ Provides definitions for running catch2 tests.
 """
 
 import logging
+import os
+from pathlib import Path
 import subprocess
+import tempfile
 from typing import List
 
+from .junitxml import JUnitXML
 from .test import BinaryTest
 
 class Catch2Test(BinaryTest):
@@ -15,8 +19,11 @@ class Catch2Test(BinaryTest):
     errored: List[str] = []
 
     def _run_catch2test(self) -> None:
+        f, tmp_report = tempfile.mkstemp(suffix='.xml')
+        os.close(f)
+
         command = (f'./{self.binary} '
-                   f'--reporter xml::out={self.get_report()} '
+                   f'--reporter xml::out={tmp_report} '
                    f'{self.opts} ')
         if self.skipped is not None and not self.skipped.is_empty():
             command += f'*,~{",~".join(self.skipped.get_case_names())} '
@@ -31,6 +38,10 @@ class Catch2Test(BinaryTest):
                     check=False,
                     shell=True
             )
+
+        report_xml = JUnitXML(tmp_report)
+        Path(tmp_report).unlink()
+        return report_xml
 
     @classmethod
     def get_name_framework(cls) -> str:
