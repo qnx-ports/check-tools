@@ -28,7 +28,6 @@ class GTest(BinaryTest):
 
         self.suite = suite
         self.case = case
-        self.errored = []
 
     @classmethod
     def _generate_test_list(cls, binary: str, output: str,

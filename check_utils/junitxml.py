@@ -55,7 +55,7 @@ class JUnitXML:
         @return True if there were no failures or errors,
                 False otherwise.
         """
-        root = self._tree.getroot()
+        root = self.tree.getroot()
         return (root.get('failures', '0') == '0') \
                 and (root.get('errors', '0') == '0')
 

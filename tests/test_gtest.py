@@ -11,6 +11,7 @@ from typing import Final
 from unittest.mock import ANY, patch
 
 from check_utils import GTest, Skipped, JUnitXML
+from check_utils.test import TestMeta
 import common
 
 OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
@@ -58,7 +59,7 @@ class MkstempMockWrapper:
     ('--my-custom-opt1 --my-custom-opt2', 300, 'Run this program with --check_for_leaks to enable custom leak checking in the tests.\n'),
     ('-a', 1800, 'Running main() from googletest/googletest/src/gtest_main.cc\n')
     ])
-def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
+def test__run_gtest(mocker, output_file, opts, timeout, blurb):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          blurb +
@@ -69,8 +70,11 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
                                          ' 3tseT\n'
                                          ' Ttse4')
 
-    gtest = GTest('bin', report_file, output_file, opts,
-                  None, timeout)
+    meta = TestMeta(GTest)
+    gtest_tests = list(GTest._generate_test_list('bin', output_file,
+                                                 opts, meta, timeout))
+
+    assert len(gtest_tests) == 4
 
     mocker.patch('subprocess.run')
 
@@ -80,7 +84,8 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
             'stdout': ANY,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs2 = {
@@ -89,7 +94,8 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
             'stdout': ANY,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs3 = {
@@ -98,7 +104,8 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
             'stdout': ANY,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs4 = {
@@ -107,10 +114,12 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
             'stdout': ANY,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
-    gtest._run_gtest()
+    for gtest in gtest_tests:
+        gtest._run_gtest()
 
     subprocess.run.assert_any_call(**expected_kwargs1)
     subprocess.run.assert_any_call(**expected_kwargs2)
@@ -120,10 +129,9 @@ def test__run_gtest(mocker, report_file, output_file, opts, timeout, blurb):
     assert not Path(MKSTEMP_REPORT_FILE).exists()
     assert not Path(PREMATURE_EXIT_FILE).exists()
     assert not Path(STDERR_FILE).exists()
-    assert Path(report_file).exists()
 
 @patch.object(tempfile, 'mkstemp', MkstempMockWrapper.mkstemp_mock)
-def test__run_gtest_skipped1(mocker, report_file, output_file):
+def test__run_gtest_skipped1(mocker, output_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'Foo.\n'
@@ -134,8 +142,12 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
                                          ' Ttse4')
 
     skipped = Skipped.make_from_dict({'name': 'bin1'})
-    gtest = GTest('bin1', report_file, output_file, '',
-                  skipped, None)
+
+    meta = TestMeta(GTest, skipped=skipped.get_suites())
+    gtest_tests = list(GTest._generate_test_list('bin1', output_file,
+                                                 '', meta, None))
+
+    assert len(gtest_tests) == 4
 
     mocker.patch('subprocess.run')
 
@@ -145,7 +157,8 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs2 = {
@@ -154,7 +167,8 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs3 = {
@@ -163,7 +177,8 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs4 = {
@@ -172,10 +187,12 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
-    gtest._run_gtest()
+    for gtest in gtest_tests:
+        gtest._run_gtest()
 
     subprocess.run.assert_any_call(**expected_kwargs1)
     subprocess.run.assert_any_call(**expected_kwargs2)
@@ -185,10 +202,9 @@ def test__run_gtest_skipped1(mocker, report_file, output_file):
     assert not Path(MKSTEMP_REPORT_FILE).exists()
     assert not Path(PREMATURE_EXIT_FILE).exists()
     assert not Path(STDERR_FILE).exists()
-    assert Path(report_file).exists()
 
 @patch.object(tempfile, 'mkstemp', MkstempMockWrapper.mkstemp_mock)
-def test__run_gtest_skipped2(mocker, report_file, output_file):
+def test__run_gtest_skipped2(mocker, output_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'Foo.\n'
@@ -227,8 +243,13 @@ def test__run_gtest_skipped2(mocker, report_file, output_file):
                             'os': ['7.1.0'],
                             'arch': ['x86_64']
                         }]}]})
-    gtest = GTest('bin2', report_file, output_file, '',
-                  skipped, None)
+
+
+    meta = TestMeta(GTest, skipped=skipped.get_suites())
+    gtest_tests = list(GTest._generate_test_list('bin2', output_file,
+                                                 '', meta, None))
+
+    assert len(gtest_tests) == 1
 
     mocker.patch('subprocess.run')
 
@@ -238,20 +259,21 @@ def test__run_gtest_skipped2(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
-    gtest._run_gtest()
+    for gtest in gtest_tests:
+        gtest._run_gtest()
 
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
     assert not Path(MKSTEMP_REPORT_FILE).exists()
     assert not Path(PREMATURE_EXIT_FILE).exists()
     assert not Path(STDERR_FILE).exists()
-    assert Path(report_file).exists()
 
 @patch.object(tempfile, 'mkstemp', MkstempMockWrapper.mkstemp_mock)
-def test__run_gtest_errored1(mocker, report_file, output_file):
+def test__run_gtest_errored1(mocker, output_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'Foo.\n'
@@ -261,8 +283,11 @@ def test__run_gtest_errored1(mocker, report_file, output_file):
                                          ' 3tseT\n'
                                          ' Ttse4')
 
-    gtest = GTest('bin1', report_file, output_file, '',
-                  None, None)
+    meta = TestMeta(GTest)
+    gtest_tests = list(GTest._generate_test_list('bin1', output_file,
+                                                 '', meta, None))
+
+    assert len(gtest_tests) == 4
 
     mocker.patch('subprocess.run')
 
@@ -272,7 +297,8 @@ def test__run_gtest_errored1(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs2 = {
@@ -281,7 +307,8 @@ def test__run_gtest_errored1(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs3 = {
@@ -290,7 +317,8 @@ def test__run_gtest_errored1(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
     expected_kwargs4 = {
@@ -299,24 +327,24 @@ def test__run_gtest_errored1(mocker, report_file, output_file):
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'env': ANY
             }
 
-    gtest._run_gtest()
+    errored_obj = JUnitXML.make_from_passed([])
+    for gtest in gtest_tests:
+        errored_obj += gtest._run_gtest()
 
     subprocess.run.assert_any_call(**expected_kwargs1)
     subprocess.run.assert_any_call(**expected_kwargs2)
     subprocess.run.assert_any_call(**expected_kwargs3)
     subprocess.run.assert_any_call(**expected_kwargs4)
 
-    assert gtest.errored_tests == ['Foo.Test1', 'Foo.Test2', 'Bar.3tseT', 'Bar.Ttse4']
-    assert len(gtest.errored) == 2 # 2 suites
+    assert not errored_obj.is_success() # At least one test case failed.
 
     assert not Path(MKSTEMP_REPORT_FILE).exists()
     assert not Path(PREMATURE_EXIT_FILE).exists()
     assert not Path(STDERR_FILE).exists()
-    # report_file must still be created for _report_errored_tests to succeed.
-    assert Path(report_file).exists()
 
 def test_should_report_skipped_tests():
     assert GTest.should_report_skipped_tests()
