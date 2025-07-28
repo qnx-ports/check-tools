@@ -1,6 +1,7 @@
 """
 Provides common base class definitions for creating test runner objects.
 """
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from functools import cache
@@ -8,7 +9,7 @@ import glob
 import logging
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import List, Optional, Generator, Set
+from typing import List, Optional, Generator, Set, NewType
 
 from .config import Config
 from .junitxml import JUnitXML
@@ -125,7 +126,10 @@ class TestJobset(ABC):
         raise NotImplementedError('run() not implemented!')
 
 class BinaryTestJobset(TestJobset):
-    # FIXME: No convenient way to forward declare BinaryTest
+    def __init__(self, meta: TestMeta, tests: List[BinaryTest] = []):
+        self.meta = meta
+        self.tests = tests
+
     def run(self, num_jobs) -> JUnitXML:
         combined_xml = JUnitXML.make_from_passed([])
 
@@ -148,7 +152,10 @@ class BinaryTestJobset(TestJobset):
         return combined_xml
 
 class ProjectTestJobset(TestJobset):
-    # FIXME: No convenient way to forward declare ProjectTest
+    def __init__(self, meta: TestMeta, tests: List[ProjectTest] = []):
+        self.meta = meta
+        self.tests = tests
+
     def run(self, num_jobs) -> JUnitXML:
         combined_xml = JUnitXML.make_from_passed([])
 
