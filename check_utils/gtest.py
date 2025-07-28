@@ -93,7 +93,8 @@ class GTest(BinaryTest):
         # We use this to detect errored cases.
         f, tmp_premature_exit = tempfile.mkstemp()
         os.close(f)
-        os.environ['TEST_PREMATURE_EXIT_FILE'] = tmp_premature_exit
+        env = os.environ.copy()
+        env['TEST_PREMATURE_EXIT_FILE'] = tmp_premature_exit
 
         # subprocess.run does not support io.StringIO stderr
         stderr_f, tmp_stderr = tempfile.mkstemp()
@@ -110,7 +111,8 @@ class GTest(BinaryTest):
                     stderr=stderr_f,
                     timeout=self.timeout,
                     check=False,
-                    shell=True
+                    shell=True,
+                    env=env
             )
         os.close(stderr_f)
         if Path(tmp_premature_exit).exists():
@@ -134,16 +136,13 @@ class GTest(BinaryTest):
                                                                   '')])])
 
             Path(tmp_premature_exit).unlink()
-            if Path(tmp_report).exists():
-                Path(tmp_report).unlink()
+            Path(tmp_report).unlink(missing_ok=True)
         else:
             report_xml = JUnitXML(file=tmp_report)
 
             Path(tmp_report).unlink()
 
         Path(tmp_stderr).unlink()
-
-        os.environ['TEST_PREMATURE_EXIT_FILE'] = ''
 
         return report_xml
 

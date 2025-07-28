@@ -133,7 +133,7 @@ class BinaryTestJobset(TestJobset):
             with ThreadPool(processes=num_jobs) as pool:
                 results = []
                 for test in self.tests:
-                    results.append(pool.apply_async(test.run()))
+                    results.append(pool.apply_async(test.run))
 
                 # Block until all threads terminate...
                 for result in results:
