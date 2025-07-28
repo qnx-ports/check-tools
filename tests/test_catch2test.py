@@ -45,9 +45,6 @@ def report_file():
         report_path.unlink()
 
 def mkstemp_mock(suffix: str = None):
-    # Spoof a test run...
-    # It first creates a temporary xml file, then creates a file to track
-    # premature exits, then creates an output file for stderr.
     tmp_xml = JUnitXML.make_from_passed([])
     tmp_xml.write(MKSTEMP_REPORT_FILE)
     return (os.open(MKSTEMP_REPORT_FILE, os.O_RDWR | os.O_CREAT), MKSTEMP_REPORT_FILE)

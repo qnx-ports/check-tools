@@ -8,10 +8,9 @@ import subprocess
 from typing import Final
 from unittest.mock import ANY
 
-from check_utils import MesonTest, SkippedSuite, BUILD_DIR
+from check_utils import MesonTest, SkippedSuite, BUILD_DIR, TestMeta, JUnitXML
 import common
 
-REPORT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.xml'
 OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
 
 @pytest.fixture()
@@ -28,33 +27,11 @@ def output_file():
     if (output_path.exists()):
         output_path.unlink()
 
-@pytest.fixture()
-def report_file():
-    report_path = Path(REPORT_FILE)
-
-    # Setup
-    if (report_path.exists()):
-        report_path.unlink()
-    # Create empty file as workaround for rename.
-    xml_test_log = BUILD_DIR.joinpath(MesonTest.XML_TEST_LOG)
-    if xml_test_log.parent.is_file():
-        xml_test_log.parent.rmdir()
-    xml_test_log.parent.mkdir(parents=True, exist_ok=True)
-    xml_test_log.touch()
-
-    yield REPORT_FILE
-
-    # Teardown
-    if (report_path.exists()):
-        report_path.unlink()
-    # The file should have been destroyed.
-    xml_test_log.parent.rmdir()
-
-@pytest.mark.parametrize('opts,timeout', [
-    ('', None), ('--my-custom-opt1 --my-custom-opt2', None),
-    ('', 300), ('--my-custom-opt1 --my-custom-opt2', 300)
+@pytest.mark.parametrize('opts,timeout,num_jobs', [
+    ('', None, 1), ('--my-custom-opt1 --my-custom-opt2', None, 2),
+    ('', 300, 3), ('--my-custom-opt1 --my-custom-opt2', 300, 4)
     ])
-def test__run_mesontest(mocker, report_file, output_file, opts, timeout):
+def test__run_mesontest(mocker, output_file, opts, timeout, num_jobs):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'foo1:bar1 / testdir1/test1\n'
@@ -62,13 +39,18 @@ def test__run_mesontest(mocker, report_file, output_file, opts, timeout):
                                          'foo2:bar2 / testdir2/test3\n'
                                          'foo2:bar2 / testdir2/test4')
 
-    mesontest = MesonTest(REPORT_FILE, output_file, opts,
-                          [], timeout)
+    meta = TestMeta(MesonTest)
+    mesontest = MesonTest(output_file, opts, meta, timeout)
+    mesontest.set_num_jobs(num_jobs)
+
+    # Initialize test report that would normally be created by meson.
+    JUnitXML.make_from_passed([]).write(
+            BUILD_DIR.joinpath(MesonTest.XML_TEST_LOG))
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'meson test testdir1/test1 testdir1/test2 testdir2/test3 testdir2/test4 -C {BUILD_DIR} {opts}',
+            'args': f'meson test testdir1/test1 testdir1/test2 testdir2/test3 testdir2/test4 -C {BUILD_DIR} -j {num_jobs} {opts}',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
@@ -80,9 +62,7 @@ def test__run_mesontest(mocker, report_file, output_file, opts, timeout):
 
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
-    assert Path(report_file).is_file()
-
-def test__run_mesontest_skipped(mocker, report_file, output_file):
+def test__run_mesontest_skipped(mocker, output_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'foo1:bar1 / testdir1/test1\n'
@@ -119,13 +99,18 @@ def test__run_mesontest_skipped(mocker, report_file, output_file):
                                 'arch': ['x86_64']
                             }]})
             ]
-    mesontest = MesonTest(REPORT_FILE, output_file, '',
-                          skip_list, None)
+
+    meta = TestMeta(MesonTest, skipped=skip_list)
+    mesontest = MesonTest(output_file, '', meta, None)
+
+    # Initialize test report that would normally be created by meson.
+    JUnitXML.make_from_passed([]).write(
+            BUILD_DIR.joinpath(MesonTest.XML_TEST_LOG))
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'meson test testdir2/test4 -C {BUILD_DIR} ',
+            'args': f'meson test testdir2/test4 -C {BUILD_DIR} -j 1 ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
@@ -137,7 +122,8 @@ def test__run_mesontest_skipped(mocker, report_file, output_file):
 
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
-    assert Path(report_file).is_file()
+def test_should_report_skipped_tests():
+    assert not MesonTest.should_report_skipped_tests()
 
 def test_get_name_framework():
     assert MesonTest.get_name_framework() == 'meson'

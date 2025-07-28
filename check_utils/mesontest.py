@@ -56,7 +56,7 @@ class MesonTest(ProjectTest):
 
     def _run_mesontest(self) -> None:
         skipped_tests = []
-        for skip_obj in self.skipped:
+        for skip_obj in self.meta.get_skipped():
             for case in skip_obj.get_case_names():
                 _, _, test_name = case.strip().split()
                 skipped_tests.append(test_name)
@@ -78,7 +78,7 @@ class MesonTest(ProjectTest):
 
         # Meson outputs as JUnit XML automatically.
         # FIXME: Not currently cleaning up test paths...
-        report_xml = JUnitXML(file=str(BUILD_DIR.joinpath(self.XML_TEST_LOG)))
+        report_xml = JUnitXML(file=BUILD_DIR.joinpath(self.XML_TEST_LOG))
         return report_xml
 
     @classmethod
