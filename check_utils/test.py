@@ -25,7 +25,7 @@ import glob
 import logging
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
-from typing import List, Optional, Generator, Set, NewType
+from typing import List, Optional, Generator, Set
 
 from .config import Config
 from .junitxml import JUnitXML
@@ -75,7 +75,6 @@ class GenericTest(ABC):
 class TestMeta:
     not_run: Set[str]
     skipped: List[SkippedSuite]
-    tests: List[GenericTest]
 
     """
     Metadata for a set of test jobs.
@@ -84,12 +83,10 @@ class TestMeta:
     """
     def __init__(self, test_cls: type[GenericTest],
                  not_run: Set[str] = set(),
-                 skipped: List[SkippedSuite] = [],
-                 tests: List[GenericTest] = []):
+                 skipped: List[SkippedSuite] = []):
         self.test_cls = test_cls
         self.not_run = not_run
         self.skipped = skipped
-        self.tests = tests
 
     # --- PUBLIC ---
     def get_skipped(self) -> List[SkippedSuite]:
@@ -143,8 +140,7 @@ class TestJobset(ABC):
 
 class BinaryTestJobset(TestJobset):
     def __init__(self, meta: TestMeta, tests: List[BinaryTest] = []):
-        self.meta = meta
-        self.tests = tests
+        super().__init__(meta, tests)
 
     def run(self, num_jobs) -> JUnitXML:
         combined_xml = JUnitXML.make_from_passed([])
@@ -169,8 +165,7 @@ class BinaryTestJobset(TestJobset):
 
 class ProjectTestJobset(TestJobset):
     def __init__(self, meta: TestMeta, tests: List[ProjectTest] = []):
-        self.meta = meta
-        self.tests = tests
+        super().__init__(meta, tests)
 
     def run(self, num_jobs) -> JUnitXML:
         combined_xml = JUnitXML.make_from_passed([])
