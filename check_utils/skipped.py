@@ -1,8 +1,24 @@
+#
+# Copyright (c) 2025, BlackBerry Limited. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 """
 Provides data formats for skipped tests to help communicate with the underlying
 test framework, and convert to JUnitXML.
 """
-
+from functools import cache
 from typing import List, Optional, Self
 
 from .system_spec import SystemSpec
@@ -108,6 +124,12 @@ class SkippedSuite:
     def get_cases(self):
         return self.cases
 
+    def get_case(self, case_name) -> Optional[SkippedCase]:
+        for case in self.cases:
+            if case_name == case.get_name:
+                return case
+        return None
+
     def filter_tests(self, spec: SystemSpec) -> Optional[Self]:
         new_cases = []
         for case in self.cases:
@@ -168,6 +190,14 @@ class Skipped:
 
     def get_suites(self):
         return self.suites
+
+    # Avoid iterating list when possible
+    @cache
+    def get_suite(self, suite_name) -> Optional[SkippedSuite]:
+        for suite in self.suites:
+            if suite.get_name() == suite_name:
+                return suite
+        return None
 
     def is_empty(self):
         if self.suites is not None:

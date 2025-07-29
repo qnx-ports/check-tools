@@ -1,11 +1,31 @@
+#
+# Copyright (c) 2025, BlackBerry Limited. All rights reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
 """
 Provides definitions for running catch2 tests.
 """
 
 import logging
+import os
+from pathlib import Path
 import subprocess
+import tempfile
 from typing import List
 
+from .junitxml import JUnitXML
 from .test import BinaryTest
 
 class Catch2Test(BinaryTest):
@@ -15,14 +35,19 @@ class Catch2Test(BinaryTest):
     errored: List[str] = []
 
     def _run_catch2test(self) -> None:
+        f, tmp_report = tempfile.mkstemp(suffix='.xml')
+        os.close(f)
+
         command = (f'./{self.binary} '
-                   f'--reporter xml::out={self.get_report()} '
+                   f'--reporter xml::out={tmp_report} '
                    f'{self.opts} ')
-        if self.skipped is not None and not self.skipped.is_empty():
-            command += f'*,~{",~".join(self.skipped.get_case_names())} '
+        if len(self.meta.get_skipped()) != 0:
+            command += f'*,~{",~".join(case_name
+                                       for skipped in self.meta.get_skipped()
+                                       for case_name in skipped.get_case_names())} '
 
         logging.info("Catch2Test running command: %s", command)
-        with open(self.get_output(), 'a', encoding="utf-8") as output_f:
+        with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
                     stderr=output_f,
@@ -31,6 +56,14 @@ class Catch2Test(BinaryTest):
                     check=False,
                     shell=True
             )
+
+        report_xml = JUnitXML(tmp_report)
+        Path(tmp_report).unlink()
+        return report_xml
+
+    @classmethod
+    def should_report_skipped_tests(cls) -> None:
+        return False
 
     @classmethod
     def get_name_framework(cls) -> str:
