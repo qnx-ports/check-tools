@@ -47,6 +47,8 @@ def report_file():
     # Teardown
     if (report_path.exists()):
         report_path.unlink()
+    if (xml_test_log.exists()):
+        xml_test_log.unlink()
     # The file should have been destroyed.
     xml_test_log.parent.rmdir()
 
@@ -62,7 +64,7 @@ def test__run_mesontest(mocker, report_file, output_file, opts, timeout):
                                          'foo2:bar2 / testdir2/test3\n'
                                          'foo2:bar2 / testdir2/test4')
 
-    mesontest = MesonTest(REPORT_FILE, output_file, opts,
+    mesontest = MesonTest('', REPORT_FILE, output_file, opts,
                           [], timeout)
 
     mocker.patch('subprocess.run')
@@ -98,12 +100,12 @@ def test__run_mesontest_skipped(mocker, report_file, output_file):
                     'timestamp': '1970-01-01T00:00:00+00:00',
                     'cases': [
                             {
-                                'name': 'foo1:bar1 / testdir1/test1',
+                                'name': 'testdir1/test1',
                                 'line': '1',
                                 'os': ['8.0.0'],
                             },
                             {
-                                'name': 'foo1:bar1 / testdir1/test2',
+                                'name': 'testdir1/test2',
                                 'line': '2'
                             }]}),
             SkippedSuite.make_from_dict(
@@ -113,13 +115,13 @@ def test__run_mesontest_skipped(mocker, report_file, output_file):
                     'timestamp': '2000-01-01T00:00:00+00:00',
                     'cases': [
                             {
-                                'name': 'foo2:bar2 / testdir2/test3',
+                                'name': 'testdir2/test3',
                                 'line': '1',
                                 'os': ['7.1.0'],
                                 'arch': ['x86_64']
                             }]})
             ]
-    mesontest = MesonTest(REPORT_FILE, output_file, '',
+    mesontest = MesonTest('', REPORT_FILE, output_file, '',
                           skip_list, None)
 
     mocker.patch('subprocess.run')

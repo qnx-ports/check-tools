@@ -47,13 +47,14 @@ def report_file():
     ('', 300), ('--my-custom-opt1 --my-custom-opt2', 300)
     ])
 def test__run_pytest(mocker, report_file, output_file, opts, timeout):
-    pytest = PyTest(REPORT_FILE, output_file, opts,
+    path = ''
+    pytest = PyTest(path, REPORT_FILE, output_file, opts,
                           [], timeout)
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'pytest --junit-xml={report_file} {opts} ',
+            'args': f'pytest --junit-xml={report_file} -o junit-family=xunit1 {opts} {path}',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
@@ -65,7 +66,7 @@ def test__run_pytest(mocker, report_file, output_file, opts, timeout):
 
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
-def test__run_mesontest_skipped(mocker, report_file, output_file):
+def test__run_pytest_skipped(mocker, report_file, output_file):
     skip_list = [
             SkippedSuite.make_from_dict(
                 {
@@ -95,13 +96,16 @@ def test__run_mesontest_skipped(mocker, report_file, output_file):
                                 'arch': ['x86_64']
                             }]})
             ]
-    pytest = PyTest(REPORT_FILE, output_file, '',
+
+    path = ''
+    opts = ''
+    pytest = PyTest(path, REPORT_FILE, output_file, opts,
                           skip_list, None)
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'pytest --junit-xml={report_file}  -k "not test_foo1 and not test_foo2 and not test_foo3" ',
+            'args': f'pytest --junit-xml={report_file} -o junit-family=xunit1 {opts} {path} -k "not test_foo1 and not test_foo2 and not test_foo3" ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,

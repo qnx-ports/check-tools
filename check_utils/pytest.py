@@ -18,9 +18,9 @@ class PyTest(ProjectTest):
     def _run_pytest(self) -> None:
         command = ('pytest '
                    f'--junit-xml={self.report} '
-                   f'-o junit-family=xunit1'
+                   f'-o junit-family=xunit1 '
                    f'{self.opts} {self.path}')
-        if len(self.skipped) != 0:
+        if self.skipped is not None and len(self.skipped) != 0:
             case_names = [case
                           for s in self.skipped for case in s.get_case_names()]
             formatted_skipped = [f'not {case}' for case in case_names]

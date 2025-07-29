@@ -50,7 +50,7 @@ class MesonTest(ProjectTest):
             # format and are included in the test run via the test-name
             line = line.strip()
             if line.find('/') != -1:
-                project, test = line.split('/')
+                project, test = line.split('/', 1)
                 project = project.strip()
                 logging.info('project = %s', project)
             else:
@@ -63,10 +63,11 @@ class MesonTest(ProjectTest):
 
     def _run_mesontest(self) -> None:
         skipped_tests = []
-        for skip_obj in self.skipped:
-            for case in skip_obj.get_case_names():
-                test_name = case.strip()
-                skipped_tests.append(test_name)
+        if self.skipped is not None:
+            for skip_obj in self.skipped:
+                for case in skip_obj.get_case_names():
+                    test_name = case.strip()
+                    skipped_tests.append(test_name)
 
         run_tests = [test for test in self.tests if test not in skipped_tests]
 
