@@ -64,14 +64,6 @@ class GenericTest(ABC):
         """
         return self._run_impl()
 
-    def get_output(self) -> str:
-        """
-        Get the name of the command-line output file.
-
-        @return command-line output file name.
-        """
-        return self.output
-
 class TestMeta:
     not_run: Set[str]
     skipped: List[SkippedSuite]
@@ -334,11 +326,12 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
 
             skipped = framework_config.get('skipped', [])
             skipped_suites = []
-            for suite in skipped.get('suites', []):
-                skipped_suite = SkippedSuite.make_from_dict(suite)\
-                        .filter_tests(spec)
-                if skipped_suite is not None:
-                    meta.add_skipped(skipped_suite)
+            if skipped:
+                for suite in skipped.get('suites', []):
+                    skipped_suite = SkippedSuite.make_from_dict(suite)\
+                            .filter_tests(spec)
+                    if skipped_suite is not None:
+                        meta.add_skipped(skipped_suite)
 
             opts = framework_config.get('opt', '')
 

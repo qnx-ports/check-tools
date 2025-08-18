@@ -49,9 +49,9 @@ class MesonTest(ProjectTest):
         status = None
         output = None
         status, output = subprocess.getstatusoutput(command)
-        if not (os.WIFEXITED(status) and (os.WEXITSTATUS(status) == 0)):
+        if status is not 0:
             logging.error('Non-zero exit status %d '
-                              'returned from %s', os.WEXITSTATUS(status),
+                              'returned from %s', status,
                               command)
             raise subprocess.CalledProcessError('meson command failed.',
                                                 cmd=command)
