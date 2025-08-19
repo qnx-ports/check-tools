@@ -65,6 +65,7 @@ class GenericTest(ABC):
         return self._run_impl()
 
 class TestMeta:
+    __test__ = False
     not_run: Set[str]
     skipped: List[SkippedSuite]
 
@@ -295,14 +296,16 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
     Abstract class for a factory which produces test instances of the derived
     class which correspond to a project-level test runner.
     """
+    path: str = ''
     opts: str = ''
     meta: TestMeta
     timeout: Optional[int] = None
     num_jobs: int
 
-    def __init__(self, output: str, opts: str,
+    def __init__(self, path: str, output: str, opts: str,
                  meta: TestMeta, timeout: Optional[int] = None):
         super().__init__(output)
+        self.path = path
         self.opts = opts
         self.meta = meta
         self.timeout = timeout
@@ -322,11 +325,11 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
 
         framework_config = config.get(cls.get_name_framework(), None)
         if framework_config is not None:
+            path = framework_config.get('path', '')
             meta = TestMeta(cls)
 
-            skipped = framework_config.get('skipped', [])
-            skipped_suites = []
-            if skipped:
+            skipped = framework_config.get('skipped', None)
+            if skipped is not None:
                 for suite in skipped.get('suites', []):
                     skipped_suite = SkippedSuite.make_from_dict(suite)\
                             .filter_tests(spec)
@@ -335,7 +338,7 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
 
             opts = framework_config.get('opt', '')
 
-            tests.append(cls(output, opts, skipped_suites,
+            tests.append(cls(path, output, opts, meta,
                              config.get('timeout', None)))
             return ProjectTestJobset(meta, tests)
         else:

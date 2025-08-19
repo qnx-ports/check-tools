@@ -39,9 +39,10 @@ class PyTest(ProjectTest):
         os.close(f)
 
         command = ('pytest '
-                   f'--junit-xml={tmp_report} '
+                   f'--junitxml={tmp_report} '
+                   f'-o junit_family=xunit1 '
                    f'-n {self.num_jobs} '
-                   f'{self.opts} ')
+                   f'{self.opts} {self.path} ')
         if len(self.meta.get_skipped()) != 0:
             case_names = [case
                           for s in self.meta.get_skipped()
@@ -65,7 +66,7 @@ class PyTest(ProjectTest):
 
     @classmethod
     def should_report_skipped_tests(cls) -> None:
-        return False
+        return True
 
     @classmethod
     def get_name_framework(cls) -> str:

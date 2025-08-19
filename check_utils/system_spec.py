@@ -38,7 +38,7 @@ class SystemSpec:
     @classmethod
     def from_uname(cls):
         status, output = subprocess.getstatusoutput('uname -a')
-        if status is not 0:
+        if status != 0:
             raise subprocess.CalledProcessError('uname command failed.',
                                                 cmd='uname -a')
 

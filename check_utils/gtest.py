@@ -65,7 +65,7 @@ class GTest(BinaryTest):
         status = None
         output = None
         status, output = subprocess.getstatusoutput(command)
-        if status is not 0:
+        if status != 0:
             logging.error('Non-zero exit status %d '
                               'returned from %s', status,
                               command)
