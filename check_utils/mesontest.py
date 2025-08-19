@@ -28,6 +28,7 @@ from .definitions import BUILD_DIR
 from .junitxml import JUnitXML
 from .skipped import SkippedSuite
 from .test import ProjectTest
+from .test import TestMeta
 
 class MesonTest(ProjectTest):
     """
@@ -38,9 +39,9 @@ class MesonTest(ProjectTest):
     errored: List[str] = []
     tests: List[str] = []
 
-    def __init__(self, output: str, opts: str,
-                 skipped: List[SkippedSuite], timeout: Optional[int] = None):
-        super().__init__(output, opts, skipped, timeout)
+    def __init__(self, path: str, output: str, opts: str,
+                 meta: TestMeta, timeout: Optional[int] = None):
+        super().__init__(path, output, opts, meta, timeout)
 
         # Meson doesn't have a way to exclude tests. We will need to filter
         # manually.
@@ -49,9 +50,9 @@ class MesonTest(ProjectTest):
         status = None
         output = None
         status, output = subprocess.getstatusoutput(command)
-        if not (os.WIFEXITED(status) and (os.WEXITSTATUS(status) == 0)):
+        if status != 0:
             logging.error('Non-zero exit status %d '
-                              'returned from %s', os.WEXITSTATUS(status),
+                              'returned from %s', status,
                               command)
             raise subprocess.CalledProcessError('meson command failed.',
                                                 cmd=command)
@@ -61,10 +62,16 @@ class MesonTest(ProjectTest):
         for line in output.splitlines():
             logging.info('----------------------------------------------------')
             logging.info(line)
-            # Meson cases follow the format `<project> / <test-name>` and are
-            # included in the test run via the test-name.
-            project, _, test = line.strip().split()
-            logging.info('project = %s', project)
+            # Meson cases either follow ` <project> / <test-name>` or '<test-name>'
+            # format and are included in the test run via the test-name
+            line = line.strip()
+            if line.find('/') != -1:
+                project, test = line.split('/', 1)
+                project = project.strip()
+                logging.info('project = %s', project)
+            else:
+                test = line
+            test = test.strip()
             logging.info('test = %s', test)
             logging.info('----------------------------------------------------')
 
@@ -72,10 +79,16 @@ class MesonTest(ProjectTest):
 
     def _run_mesontest(self) -> None:
         skipped_tests = []
-        for skip_obj in self.meta.get_skipped():
-            for case in skip_obj.get_case_names():
-                _, _, test_name = case.strip().split()
-                skipped_tests.append(test_name)
+        if self.meta.get_skipped() is not None:
+            for skip_obj in self.meta.get_skipped():
+                for case in skip_obj.get_case_names():
+                    case = case.strip()
+                    if case.find('/') != -1:
+                        _, test_name = case.split('/', 1)
+                    else:
+                        test_name = case
+                    test_name = test_name.strip()
+                    skipped_tests.append(test_name)
 
         run_tests = [test for test in self.tests if test not in skipped_tests]
 

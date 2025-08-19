@@ -71,7 +71,7 @@ def test__run_mesontest(mocker, output_file, xml_test_log_file, opts, timeout, n
                                          'foo2:bar2 / testdir2/test4')
 
     meta = TestMeta(MesonTest)
-    mesontest = MesonTest(output_file, opts, meta, timeout)
+    mesontest = MesonTest('', output_file, opts, meta, timeout)
     mesontest.set_num_jobs(num_jobs)
 
     # Initialize test report that would normally be created by meson.
@@ -131,7 +131,7 @@ def test__run_mesontest_skipped(mocker, output_file, xml_test_log_file):
             ]
 
     meta = TestMeta(MesonTest, skipped=skip_list)
-    mesontest = MesonTest(output_file, '', meta, None)
+    mesontest = MesonTest('', output_file, '', meta, None)
 
     # Initialize test report that would normally be created by meson.
     JUnitXML.make_from_passed([]).write(xml_test_log_file)

@@ -58,13 +58,14 @@ def mkstemp_mock(suffix: str = None):
     ])
 def test__run_pytest(mocker, output_file, opts, timeout, num_jobs):
     meta = TestMeta(PyTest)
-    pytest = PyTest(output_file, opts, meta, timeout)
+    path = ''
+    pytest = PyTest(path, output_file, opts, meta, timeout)
     pytest.set_num_jobs(num_jobs)
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'pytest --junit-xml={MKSTEMP_REPORT_FILE} -n {num_jobs} {opts} ',
+            'args': f'pytest --junitxml={MKSTEMP_REPORT_FILE} -o junit_family=xunit1 -n {num_jobs} {opts} {path} ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
@@ -77,7 +78,7 @@ def test__run_pytest(mocker, output_file, opts, timeout, num_jobs):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
 @patch.object(tempfile, 'mkstemp', mkstemp_mock)
-def test__run_mesontest_skipped(mocker, output_file):
+def test__run_pytest_skipped(mocker, output_file):
     skip_list = [
             SkippedSuite.make_from_dict(
                 {
@@ -108,12 +109,14 @@ def test__run_mesontest_skipped(mocker, output_file):
                             }]})
             ]
     meta = TestMeta(PyTest, skipped=skip_list)
-    pytest = PyTest(output_file, '', meta, None)
+    path = ''
+    opts = ''
+    pytest = PyTest(path, output_file, opts, meta, None)
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'pytest --junit-xml={MKSTEMP_REPORT_FILE} -n 1  -k "not test_foo1 and not test_foo2 and not test_foo3" ',
+            'args': f'pytest --junitxml={MKSTEMP_REPORT_FILE} -o junit_family=xunit1 -n 1 {opts} {path} -k "not test_foo1 and not test_foo2 and not test_foo3" ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
@@ -126,7 +129,7 @@ def test__run_mesontest_skipped(mocker, output_file):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
 def test_should_report_skipped_tests():
-    assert not PyTest.should_report_skipped_tests()
+    assert PyTest.should_report_skipped_tests()
 
 def test_get_name_framework():
     assert PyTest.get_name_framework() == 'pytest'

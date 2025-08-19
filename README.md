@@ -64,7 +64,7 @@ The current progress for `bin/check.py`:
   - [ ] Errored tests are added to the resulting JUnitXML.
 - pytest:
   - [x] Workflow is implemented.
-  - [ ] Workflow is verified on linux.
+  - [x] Workflow is verified on linux.
   - [ ] Workflow is verified on QNX.
-  - [ ] Skipped tests are added to the resulting JUnitXML.
+  - [x] Skipped tests are added to the resulting JUnitXML.
   - [ ] Errored tests are added to the resulting JUnitXML.

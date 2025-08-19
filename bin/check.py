@@ -174,7 +174,7 @@ if __name__ == '__main__':
             '-v', '--verbose',
             action='count',
             default=0,
-            help='Verbose output. Maximum value of 3.'
+            help='Verbose output. Maximum value of 2.'
             )
     args = parser.parse_args()
 
