@@ -45,7 +45,7 @@ class MesonTest(ProjectTest):
 
         # Meson doesn't have a way to exclude tests. We will need to filter
         # manually.
-        command = 'meson test --list'
+        command = f'meson test --list -C {BUILD_DIR}'
         logging.info('MesonTest running command: %s', command)
         status = None
         output = None
@@ -112,7 +112,7 @@ class MesonTest(ProjectTest):
 
     @classmethod
     def should_report_skipped_tests(cls) -> None:
-        return False
+        return True
 
     @classmethod
     def get_name_framework(cls) -> str:
