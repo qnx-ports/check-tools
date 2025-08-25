@@ -8,14 +8,16 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python_ver: ["3.11", "3.13"]
     steps:
       - uses: actions/checkout@v3
 
-      # Self-hosted env uses 3.13
-      - name: Set up Python 3.13
+      - name: Set up Python ${{ matrix.python_ver }}
         uses: actions/setup-python@v2
         with:
-          python-version: '3.13'
+          python-version: ${{ matrix.python_ver }}
 
       - name: Install dependencies
         run: |

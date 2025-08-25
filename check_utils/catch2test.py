@@ -42,9 +42,11 @@ class Catch2Test(BinaryTest):
                    f'--reporter xml::out={tmp_report} '
                    f'{self.opts} ')
         if len(self.meta.get_skipped()) != 0:
-            command += f'*,~{",~".join(case_name
-                                       for skipped in self.meta.get_skipped()
-                                       for case_name in skipped.get_case_names())} '
+            command += '*,~{} ' \
+                    .format(",~" \
+                    .join(case_name
+                          for skipped in self.meta.get_skipped()
+                          for case_name in skipped.get_case_names()))
 
         logging.info("Catch2Test running command: %s", command)
         with open('/dev/null', 'w') as output_f:
