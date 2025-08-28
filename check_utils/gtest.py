@@ -95,7 +95,7 @@ class GTest(BinaryTest):
     def _run_gtest(self) -> None:
         report_xml: Optional[JUnitXML] = None
         # Suite timestamp
-        timestamp = datetime.datetime.now().isoformat()
+        timestamp = datetime.datetime.now()
 
         case_full = self.suite + '.' + self.case
 
@@ -131,6 +131,8 @@ class GTest(BinaryTest):
             )
         os.close(stderr_f)
         if Path(tmp_premature_exit).exists():
+            end_timestamp = datetime.datetime.now()
+            duration = (end_timestamp - timestamp).total_seconds()
             stderr = ''
             with open(tmp_stderr, 'r', encoding="utf-8") as f:
                 stderr = f.read()
@@ -140,12 +142,10 @@ class GTest(BinaryTest):
             report_xml = JUnitXML\
                     .make_from_errored([ErroredSuite(self.suite,
                                                      '',
-                                                     timestamp,
+                                                     timestamp.isoformat(),
                                                      [ErroredCase(self.case,
                                                                   '',
-                                                                  datetime.datetime\
-                                                                          .now()\
-                                                                          .isoformat(),
+                                                                  str(duration),
                                                                   '0',
                                                                   stderr,
                                                                   '')])])
