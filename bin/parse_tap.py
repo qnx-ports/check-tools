@@ -26,8 +26,18 @@ config_obj = cu.Config.make_config()
 
 Path(config_obj['out_dir']).mkdir(parents=True, exist_ok=True)
 
-suite_pattern = r'^([0-9a-zA-Z_\/\.\-]+) \.+'
-case_pattern = r'^(ok|not ok) [0-9]+ \- (.*)'
+# Suite names are non-standard and will need to be handled on a case-by-case
+# basis.
+# https://node-tap.org/tap-format/
+# By default, use the suite name 'test', otherwise assume that we're parsing
+# prove.
+suite_pattern = r'^([0-9a-zA-Z_\/\.\-]+) \.\.\.+'
+# Sometimes there will be a trailing "ok" to indicate that the entire file
+# succeeded. We will just ignore those.
+# This means that we drop tests that are skipped within the context of TAP.
+length_pattern = r'^([0-9]+)\.\.([0-9]+)'
+case_pattern = r'^(ok|not ok)(?: [0-9]+ \- )?(.*)'
+# Errors are non-standard and will need to be handled on a case-by-case basis.
 # Prove reports don't have a clear indication that an error occured until you
 # reach the test summary.
 e_pattern = r'^([0-9a-zA-Z_\/\.\-]+)\s*\(Wstat: [0-9]+ \(Signal: (.*)\) Tests: [0-9]+ Failed: [0-9]+\)'
@@ -46,6 +56,7 @@ skipped_suites = [skipped_obj
                   if (skipped_obj := cu.SkippedSuite.make_from_dict(skipped_config).filter_tests(cu.SystemSpec.from_uname())) is not None]
 
 suite = None
+length = None
 with open(config_obj['out_dir'] + '/' + config_obj['package'] + '.txt', 'w') as out:
     for line in sys.stdin:
         if (match := re.match(suite_pattern, line)):
@@ -57,16 +68,22 @@ with open(config_obj['out_dir'] + '/' + config_obj['package'] + '.txt', 'w') as 
 
                 passed_cases = []
                 failed_cases = []
+                length = None
 
             suite = match.group(1).strip()
-        elif suite is not None and (match := re.match(case_pattern, line)):
+        elif (match := re.match(length_pattern, line)):
+            start = int(match.group(1).strip())
+            end = int(match.group(2).strip())
+            length = end - start + 1
+        elif (match := re.match(case_pattern, line)):
             status = match.group(1).strip()
             case = match.group(2).strip()
 
             if len([True
                     for skipped_suite in skipped_suites
                     for case_name in skipped_suite.get_case_names()
-                    if skipped_suite.get_name() == suite and case_name == case]) != 0:
+                    if skipped_suite.get_name() == suite and case_name == case]) != 0 \
+                            or ((len(passed_cases) + len(failed_cases)) >= length):
                 pass
             elif status == 'ok':
                 passed_cases.append(cu.PassedCase(case, '', '', ''))
@@ -84,11 +101,13 @@ with open(config_obj['out_dir'] + '/' + config_obj['package'] + '.txt', 'w') as 
 
         out.write(line)
 
-if suite is not None:
-    if len(passed_cases) != 0:
-        passed_suites.append(cu.PassedSuite(suite, '', timestamp, passed_cases))
-    if len(failed_cases) != 0:
-        failed_suites.append(cu.FailedSuite(suite, '', timestamp, failed_cases))
+if suite is None:
+    suite = 'test'
+
+if len(passed_cases) != 0:
+    passed_suites.append(cu.PassedSuite(suite, '', timestamp, passed_cases))
+if len(failed_cases) != 0:
+    failed_suites.append(cu.FailedSuite(suite, '', timestamp, failed_cases))
 
 xml_report = cu.JUnitXML.make_from_passed(passed_suites)
 xml_report += cu.JUnitXML.make_from_failed(failed_suites)

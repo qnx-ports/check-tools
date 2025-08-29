@@ -1,0 +1,8 @@
+Internal ctest changing into directory: /path/to/build/directory
+Test project /path/to/build/directory
+        Start  24: foo-test
+    1/1 Test  #24: foo-test ............................................   Passed    0.05 sec
+
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =  0.05 sec

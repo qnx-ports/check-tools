@@ -19,6 +19,9 @@ Common utils across all tests.
 """
 
 import logging
+from pathlib import Path
 import sys
+
+TEST_DIR = Path(__file__).parent.resolve()
 
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)

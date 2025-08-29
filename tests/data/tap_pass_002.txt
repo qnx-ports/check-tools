@@ -1,0 +1,6 @@
+1..4
+ok 1 - test case 1
+ok 2 - test case 2
+ok
+ok 4 - test case 4
+ok
