@@ -152,7 +152,7 @@ def test__run_mesontest_skipped(mocker, output_file, xml_test_log_file):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
 def test_should_report_skipped_tests():
-    assert not MesonTest.should_report_skipped_tests()
+    assert MesonTest.should_report_skipped_tests()
 
 def test_get_name_framework():
     assert MesonTest.get_name_framework() == 'meson'
