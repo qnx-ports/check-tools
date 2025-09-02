@@ -18,23 +18,33 @@
 Read in test.toml files for a package.
 """
 
-from functools import partial
 import logging
-import os
 from pathlib import Path
 import re
 import subprocess
 import tomllib
 from typing import Final, Optional, Self
 
-from .definitions import START_DIR, PACKAGE_CONFIG, PROJECT_CONFIG
+from .definitions import START_DIR, PROJECT_DIR, PACKAGE_CONFIG, PROJECT_CONFIG
+
+def _get_shell(cmd):
+    logging.debug('Running command `%s`',
+                  cmd)
+    return subprocess.check_output(cmd,
+                                   shell=True).decode('utf-8').strip()
 
 class Config(dict):
+    OPTS_MAP = {
+            'start_dir': str(START_DIR),
+            'project_dir': str(PROJECT_DIR),
+            'nproc': _get_shell('nproc')
+            }
+
     DEFAULTS: Final[dict] = {
             'out_dir': str(START_DIR.joinpath('test-out'))
             }
 
-    SHELL_RE: Final[str] = r'\$\{\s*\{(.*)\}\s*\}'
+    OPTS_RE: Final[str] = r'\$\{\s*\{(.*)\}\s*\}'
 
     """
     Corresponds to the hierarchical configuration of a package.
@@ -44,7 +54,8 @@ class Config(dict):
     aports-level configuration.
 
     This also preprocesses the test.toml file for strings containing the format
-    ${{}}, which gets evaluated as if it were executed in the shell.
+    ${{}}, which get substituted for the internal values corresponding to the
+    key.
     """
     @classmethod
     def make_config(cls,
@@ -76,15 +87,9 @@ class Config(dict):
 
     @classmethod
     def _preprocess(cls, conf: str) -> str:
-        def shell_repl(env, matchobj):
-            logging.debug('test.toml parser running command %s',
-                          matchobj.group(1))
-            return subprocess.check_output(matchobj.group(1),
-                                           shell=True,
-                                           env=env).decode('utf-8')
+        def opts_repl(matchobj):
+            return cls.OPTS_MAP[matchobj.group(1)]
 
-        env = os.environ.copy()
-
-        return re.sub(cls.SHELL_RE,
-                      partial(shell_repl, env),
+        return re.sub(cls.OPTS_RE,
+                      opts_repl,
                       conf)
