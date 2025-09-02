@@ -6,6 +6,12 @@ build-backend = "setuptools.build_meta"
 name = "check_utils"
 version = "0.1.2"
 
+[project.scripts]
+cucheck = "check_utils.entry.check:main"
+cuparse_automake = "check_utils.entry.parse_automake:main"
+cuparse_ctest = "check_utils.entry.parse_ctest:main"
+cuparse_tap = "check_utils.entry.parse_tap:main"
+
 [tool.pylint."MESSAGES CONTROL"]
 
 confidence = ''
