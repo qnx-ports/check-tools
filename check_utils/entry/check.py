@@ -151,7 +151,7 @@ class Main:
 
         return check_utils.CheckExit.EXIT_FAILURE
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(
             prog='check.py',
             description='Runs tests for a package.',
@@ -179,4 +179,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     m = Main(args.config, args.project_config, args.verbose)
+
     sys.exit(m.main())
+
+if __name__ == '__main__':
+    main()

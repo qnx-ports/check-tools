@@ -24,7 +24,6 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e ./
           install -m755 ./bin/*.sh /usr/local/bin
-          install -m644 ./bin/*.py /usr/local/bin
           pip install -r tests/requirements.txt
 
       - name: Run tests
