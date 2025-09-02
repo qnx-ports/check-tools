@@ -43,7 +43,7 @@ package = "name"
 timeout = 1800 # Timeout per test file in seconds
 # Prefer not to modify. Set to startdir by default.
 out_dir = "."
-jobs = 4
+jobs = 4 # OR ${{nproc}} (Processed as an integer literal, not a string)
 
 # Frameworks abstracted to include those run at project level and those run at
 # binary level.

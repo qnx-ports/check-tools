@@ -18,8 +18,12 @@
 Read in test.toml files for a package.
 """
 
+from functools import partial
 import logging
+import os
 from pathlib import Path
+import re
+import subprocess
 import tomllib
 from typing import Final, Optional, Self
 
@@ -30,12 +34,17 @@ class Config(dict):
             'out_dir': str(START_DIR.joinpath('test-out'))
             }
 
+    SHELL_RE: Final[str] = r'\$\{\s*\{(.*)\}\s*\}'
+
     """
     Corresponds to the hierarchical configuration of a package.
     Configuration is read from a aports-level test.toml that applies to all
     packages, and a package-level test.toml file that applies to an individual
     package. The package-level configuration overrides the defaults set in the
     aports-level configuration.
+
+    This also preprocesses the test.toml file for strings containing the format
+    ${{}}, which gets evaluated as if it were executed in the shell.
     """
     @classmethod
     def make_config(cls,
@@ -48,15 +57,15 @@ class Config(dict):
 
         conf = cls.DEFAULTS
         if Path(project_config).exists() and Path(project_config).is_file():
-            with open(project_config, "rb") as f:
-                temp_conf = tomllib.load(f)
+            with open(project_config, "r") as f:
+                temp_conf = tomllib.loads(cls._preprocess(f.read()))
                 conf.update(temp_conf)
         else:
             logging.warning('project config %s was not found!', project_config)
 
         if Path(package_config).exists() and Path(package_config).is_file():
-            with open(package_config, "rb") as f:
-                temp_conf = tomllib.load(f)
+            with open(package_config, "r") as f:
+                temp_conf = tomllib.loads(cls._preprocess(f.read()))
                 conf.update(temp_conf)
         else:
             logging.warning('package config %s was not found!', package_config)
@@ -64,3 +73,18 @@ class Config(dict):
         # If neither configuration exists, fallback on KeyError handling...
 
         return cls(conf)
+
+    @classmethod
+    def _preprocess(cls, conf: str) -> str:
+        def shell_repl(env, matchobj):
+            logging.debug('test.toml parser running command %s',
+                          matchobj.group(1))
+            return subprocess.check_output(matchobj.group(1),
+                                           shell=True,
+                                           env=env).decode('utf-8')
+
+        env = os.environ.copy()
+
+        return re.sub(cls.SHELL_RE,
+                      partial(shell_repl, env),
+                      conf)
