@@ -34,6 +34,7 @@ from .catch2test import Catch2Test
 from .pytest import PyTest
 from .mesontest import MesonTest
 from .qttest import QtTest
+from .ctest import CTest
 
 from typing import Final
 
@@ -41,6 +42,7 @@ TEST_FRAMEWORK_BUILTINS: Final[TestGenerator] = [
         GTest,
         Catch2Test,
         QtTest,
+        CTest,
         PyTest,
         MesonTest
         ]

@@ -15,53 +15,125 @@
 #
 
 """
-Unit tests for parse_ctest.sh
+Unit tests for ctest.py
 """
 
-import copy
 import os
+from pathlib import Path
 import pytest
 import subprocess
+import tempfile
+from typing import Final
+from unittest.mock import ANY, patch
 
-from check_utils import CheckExit, JUnitXML
+from check_utils import CTest, SkippedSuite, JUnitXML, TestMeta
 import common
 
-@pytest.mark.parametrize('flag,num', [
-    ('pass', '001'),
-    ('pass', '002'),
+MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
+OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
+
+@pytest.fixture()
+def output_file():
+    output_path = Path(OUTPUT_FILE)
+
+    # Setup
+    if (output_path.exists()):
+        output_path.unlink()
+
+    yield OUTPUT_FILE
+
+    # Teardown
+    if (output_path.exists()):
+        output_path.unlink()
+
+def mkstemp_mock(suffix: str = None):
+    tmp_xml = JUnitXML.make_from_passed([])
+    tmp_xml.write(MKSTEMP_REPORT_FILE)
+    return (os.open(MKSTEMP_REPORT_FILE, os.O_RDWR | os.O_CREAT), MKSTEMP_REPORT_FILE)
+
+@patch.object(tempfile, 'mkstemp', mkstemp_mock)
+@pytest.mark.parametrize('opts,timeout,num_jobs', [
+    ('', None, 1), ('--my-custom-opt1 --my-custom-opt2', None, 2),
+    ('', 300, 3), ('--my-custom-opt1 --my-custom-opt2', 300, 4)
     ])
-def test_parse_automake_success(flag, num):
-    env = copy.copy(os.environ)
-    env['START_DIR'] = f'{common.TEST_DIR}/data'
+def test__run_ctest(mocker, output_file, opts, timeout, num_jobs):
+    meta = TestMeta(CTest)
+    path = ''
+    ctest = CTest(path, output_file, opts, meta, timeout)
+    ctest.set_num_jobs(num_jobs)
 
-    status = 0
-    try:
-        subprocess.run([f'cat {common.TEST_DIR}/data/ctest_{flag}_{num}.txt | parse_ctest.sh'],
-                       check=True,
-                       shell=True,
-                       env=env)
-    except subprocess.CalledProcessError as cpe:
-        status = cpe.returncode
+    mocker.patch('subprocess.run')
 
-    assert status == CheckExit.EXIT_SUCCESS
-    assert JUnitXML(file=f'{common.TEST_DIR}/data/test-out/foo.xml').is_success()
+    expected_kwargs = {
+            'args': f'ctest --output-junit={MKSTEMP_REPORT_FILE} -j {num_jobs} {opts} --build-dir {path} ',
+            'stderr': ANY,
+            'stdout': ANY,
+            'timeout': timeout,
+            'check': False,
+            'shell': True
+            }
 
-@pytest.mark.parametrize('flag,num', [
-    ('fail', '001'),
-    ('fail', '002'),
-    ])
-def test_parse_automake_failure(flag, num):
-    env = copy.copy(os.environ)
-    env['START_DIR'] = f'{common.TEST_DIR}/data'
+    ctest._run_ctest()
 
-    status = 0
-    try:
-        subprocess.run([f'cat {common.TEST_DIR}/data/ctest_{flag}_{num}.txt | parse_ctest.sh'],
-                       check=True,
-                       shell=True,
-                       env=env)
-    except subprocess.CalledProcessError as cpe:
-        status = cpe.returncode
+    subprocess.run.assert_called_once_with(**expected_kwargs)
 
-    assert status == CheckExit.EXIT_FAILURE
-    assert not JUnitXML(file=f'{common.TEST_DIR}/data/test-out/foo.xml').is_success()
+@patch.object(tempfile, 'mkstemp', mkstemp_mock)
+def test__run_ctest_skipped(mocker, output_file):
+    # In reality ctest generates junit with a single suite of name '(empty)'
+    skip_list = [
+            SkippedSuite.make_from_dict(
+                {
+                    'name': 'suite1',
+                    'file': 'file1',
+                    'timestamp': '1970-01-01T00:00:00+00:00',
+                    'cases': [
+                            {
+                                'name': 'test_foo1',
+                                'line': '1',
+                                'os': ['8.0.0'],
+                            },
+                            {
+                                'name': 'test_foo2',
+                                'line': '2'
+                            }]}),
+            SkippedSuite.make_from_dict(
+                {
+                    'name': 'suite2',
+                    'file': 'file2',
+                    'timestamp': '2000-01-01T00:00:00+00:00',
+                    'cases': [
+                            {
+                                'name': 'test_foo3',
+                                'line': '1',
+                                'os': ['7.1.0'],
+                                'arch': ['x86_64']
+                            }]})
+            ]
+    meta = TestMeta(CTest, skipped=skip_list)
+    path = ''
+    opts = ''
+    ctest = CTest(path, output_file, opts, meta, None)
+
+    mocker.patch('subprocess.run')
+
+    expected_kwargs = {
+            'args': f'ctest --output-junit={MKSTEMP_REPORT_FILE} -j 1 {opts} --build-dir {path} --exclude-regex "(test_foo1|test_foo2|test_foo3)" ',
+            'stderr': ANY,
+            'stdout': ANY,
+            'timeout': None,
+            'check': False,
+            'shell': True
+            }
+
+    ctest._run_ctest()
+
+    subprocess.run.assert_called_once_with(**expected_kwargs)
+
+def test_should_report_skipped_tests():
+    assert not CTest.should_report_skipped_tests()
+
+def test_get_name_framework():
+    assert CTest.get_name_framework() == 'ctest'
+
+def test__run_impl():
+    assert CTest._run_impl == CTest._run_ctest

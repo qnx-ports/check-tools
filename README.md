@@ -56,6 +56,12 @@ The current progress for `bin/check.py`:
   - [x] Workflow is verified on QNX.
   - [x] Skipped tests are added to the resulting JUnitXML.
   - [ ] Errored tests are added to the resulting JUnitXML.
+- ctest:
+  - [x] Workflow is implemented.
+  - [ ] Workflow is verified on linux.
+  - [ ] Workflow is verified on QNX.
+  - [ ] Skipped tests are added to the resulting JUnitXML.
+  - [ ] Errored tests are added to the resulting JUnitXML.
 - meson:
   - [x] Workflow is implemented.
   - [x] Workflow is verified on linux.
