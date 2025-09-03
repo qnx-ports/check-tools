@@ -15,39 +15,36 @@
 #
 
 """
-Provides definitions for running pytest tests.
+Provides definitions for running ctest tests.
 """
 
+import logging
 import os
 from pathlib import Path
 import subprocess
 import tempfile
-from typing import List
 
 from .junitxml import JUnitXML
 from .test import ProjectTest
 
-class PyTest(ProjectTest):
+class CTest(ProjectTest):
     """
-    Defines how to run and report a pytest test.
+    Defines how to run and report a ctest test.
     """
-    errored: List[str] = []
-
-    def _run_pytest(self) -> None:
+    def _run_ctest(self) -> None:
         f, tmp_report = tempfile.mkstemp(suffix='.xml')
         os.close(f)
 
-        command = ('pytest '
-                   f'--junitxml={tmp_report} '
-                   f'-o junit_family=xunit1 '
-                   f'-n {self.num_jobs} '
-                   f'{self.opts} {self.path} ')
+        p = str(Path(self.path).absolute())
+        command = ('ctest '
+                   f'--output-junit {tmp_report} '
+                   f'-j {self.num_jobs} '
+                   f'{self.opts} ')
         if len(self.meta.get_skipped()) != 0:
             case_names = [case
                           for s in self.meta.get_skipped()
                           for case in s.get_case_names()]
-            formatted_skipped = [f'not {case}' for case in case_names]
-            command += '-k "' + ' and '.join(formatted_skipped) + '" '
+            command += '--exclude-regex "(' + '|'.join(case_names) + ')" '
         self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
@@ -56,7 +53,8 @@ class PyTest(ProjectTest):
                     stdout=output_f,
                     timeout=self.timeout,
                     check=False,
-                    shell=True
+                    shell=True,
+                    cwd=p
             )
 
         report_xml = JUnitXML(file=tmp_report)
@@ -69,10 +67,11 @@ class PyTest(ProjectTest):
 
     @classmethod
     def get_name_framework(cls) -> str:
-        return 'pytest'
+        return 'ctest'
 
     @classmethod
     def log_support(cls) -> None:
         cls._warn_partial_support()
+        logging.warning('%s requires a cmake version >=3.21.', cls.__name__)
 
-    _run_impl = _run_pytest
+    _run_impl = _run_ctest
