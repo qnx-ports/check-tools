@@ -44,7 +44,7 @@ class MesonTest(ProjectTest):
         # Meson doesn't have a way to exclude tests. We will need to filter
         # manually.
         command = f'meson test --list -C {BUILD_DIR}'
-        logging.info('%s running command: %s', MesonTest.__name__, command)
+        self._info_cmd(command)
         status = None
         output = None
         status, output = subprocess.getstatusoutput(command)
@@ -92,7 +92,7 @@ class MesonTest(ProjectTest):
 
         command = (f'meson test {" ".join(run_tests)} -C {BUILD_DIR} -j '
                    f'{self.num_jobs} {self.opts}')
-        logging.info("%s running command: %s", MesonTest.__name__, command)
+        self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,

@@ -18,7 +18,6 @@
 Provides definitions for running pytest tests.
 """
 
-import logging
 import os
 from pathlib import Path
 import subprocess
@@ -49,7 +48,7 @@ class PyTest(ProjectTest):
                           for case in s.get_case_names()]
             formatted_skipped = [f'not {case}' for case in case_names]
             command += '-k "' + ' and '.join(formatted_skipped) + '" '
-        logging.info("%s running command: %s", PyTest.__name__, command)
+        self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,

@@ -57,6 +57,10 @@ class GenericTest(ABC):
                         'https://github.com/qnx-ports/check-tools?tab=readme-ov'
                         '-file#framework-support', cls.__name__)
 
+    @classmethod
+    def _info_cmd(cls, cmd) -> None:
+        logging.info('%s running command: %s', cls.__name__, cmd)
+
     # --- PUBLIC ---
     def run(self) -> JUnitXML:
         """

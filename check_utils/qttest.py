@@ -18,7 +18,6 @@
 Provides definitions for running catch2 tests.
 """
 
-import logging
 import os
 from pathlib import Path
 import subprocess
@@ -50,7 +49,7 @@ class QtTest(BinaryTest):
                     for case_name in skipped.get_case_names():
                         f.write(f'\n[{case_name}]\nqnx\n')
 
-        logging.info("%s running command: %s", QtTest.__name__, command)
+        self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,

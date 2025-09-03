@@ -48,7 +48,7 @@ class Catch2Test(BinaryTest):
                           for skipped in self.meta.get_skipped()
                           for case_name in skipped.get_case_names()))
 
-        logging.info("%s running command: %s", Catch2Test.__name__, command)
+        self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,

@@ -61,7 +61,7 @@ class GTest(BinaryTest):
         # FIXME: Do this in a more reliable way. EXIT_FAILURE can occur without
         # a bad output from --gtest_list_tests.
         command = f'./{binary} --gtest_list_tests'
-        logging.info('%s running command: %s', GTest.__name__, command)
+        cls._info_cmd(command)
         status = None
         output = None
         status, output = subprocess.getstatusoutput(command)
@@ -118,7 +118,7 @@ class GTest(BinaryTest):
                    f'--gtest_output="xml:{tmp_report}" '
                    f'--gtest_filter="{case_full}" '
                    f'{self.opts}')
-        logging.info("%s running command: %s", GTest.__name__, command)
+        self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,

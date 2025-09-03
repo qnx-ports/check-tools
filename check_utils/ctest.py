@@ -45,7 +45,7 @@ class CTest(ProjectTest):
                           for s in self.meta.get_skipped()
                           for case in s.get_case_names()]
             command += '--exclude-regex "(' + '|'.join(case_names) + ')" '
-        logging.info("%s running command: %s", CTest.__name__, command)
+        self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
