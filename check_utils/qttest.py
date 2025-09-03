@@ -50,7 +50,7 @@ class QtTest(BinaryTest):
                     for case_name in skipped.get_case_names():
                         f.write(f'\n[{case_name}]\nqnx\n')
 
-        logging.info("QtTest running command: %s", command)
+        logging.info("%s running command: %s", QtTest.__name__, command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
@@ -72,5 +72,9 @@ class QtTest(BinaryTest):
     @classmethod
     def get_name_framework(cls) -> str:
         return 'qt-test'
+
+    @classmethod
+    def log_support(cls) -> None:
+        cls._warn_partial_support()
 
     _run_impl = _run_qttest

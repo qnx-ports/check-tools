@@ -85,6 +85,7 @@ norun = true # Will not be added to the test report.
 
 # Rules for each project test framework
 [pytest]
+path = "build"
 opt = "--non-default-option"
 [[pytest.skipped.suites]]
 name = "suite1"

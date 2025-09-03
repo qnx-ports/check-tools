@@ -66,12 +66,13 @@ def test__run_ctest(mocker, output_file, opts, timeout, num_jobs):
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'ctest --output-junit={MKSTEMP_REPORT_FILE} -j {num_jobs} {opts} --build-dir {p} ',
+            'args': f'ctest --output-junit {MKSTEMP_REPORT_FILE} -j {num_jobs} {opts} ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'cwd': p
             }
 
     ctest._run_ctest()
@@ -119,12 +120,13 @@ def test__run_ctest_skipped(mocker, output_file):
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'ctest --output-junit={MKSTEMP_REPORT_FILE} -j 1 {opts} --build-dir {p} --exclude-regex "(test_foo1|test_foo2|test_foo3)" ',
+            'args': f'ctest --output-junit {MKSTEMP_REPORT_FILE} -j 1 {opts} --exclude-regex "(test_foo1|test_foo2|test_foo3)" ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'cwd': p
             }
 
     ctest._run_ctest()
@@ -132,7 +134,7 @@ def test__run_ctest_skipped(mocker, output_file):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
 def test_should_report_skipped_tests():
-    assert not CTest.should_report_skipped_tests()
+    assert CTest.should_report_skipped_tests()
 
 def test_get_name_framework():
     assert CTest.get_name_framework() == 'ctest'

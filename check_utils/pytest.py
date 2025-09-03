@@ -49,7 +49,7 @@ class PyTest(ProjectTest):
                           for case in s.get_case_names()]
             formatted_skipped = [f'not {case}' for case in case_names]
             command += '-k "' + ' and '.join(formatted_skipped) + '" '
-        logging.info("PyTest running command: %s", command)
+        logging.info("%s running command: %s", PyTest.__name__, command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
@@ -71,5 +71,9 @@ class PyTest(ProjectTest):
     @classmethod
     def get_name_framework(cls) -> str:
         return 'pytest'
+
+    @classmethod
+    def log_support(cls) -> None:
+        cls._warn_partial_support()
 
     _run_impl = _run_pytest

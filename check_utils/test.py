@@ -51,11 +51,11 @@ class GenericTest(ABC):
         """
         raise NotImplementedError('_run_impl() not implemented!')
 
-    def should_report_skipped_tests(self) -> bool:
-        """
-        Add skipped tests to the report if applicable.
-        """
-        pass
+    @classmethod
+    def _warn_partial_support(cls) -> None:
+        logging.warning('%s is not yet fully supported! See '
+                        'https://github.com/qnx-ports/check-tools?tab=readme-ov'
+                        '-file#framework-support', cls.__name__)
 
     # --- PUBLIC ---
     def run(self) -> JUnitXML:
@@ -63,6 +63,20 @@ class GenericTest(ABC):
         Run the tests and report the outcome.
         """
         return self._run_impl()
+
+    def should_report_skipped_tests(self) -> bool:
+        """
+        Add skipped tests to the report if applicable.
+        """
+        pass
+
+    @classmethod
+    def log_support(cls) -> None:
+        """
+        Provide information about the level of support of the framework if
+        applicable.
+        """
+        pass
 
 class TestMeta:
     __test__ = False
@@ -238,6 +252,8 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
 
         framework_config = config.get(cls.get_name_framework(), None)
         if framework_config is not None:
+            cls.log_support()
+
             binaries: str = []
             for path in framework_config.get('path', '').splitlines():
                 binaries.extend(p for p in glob.glob(path) if p not in binaries)
@@ -325,6 +341,8 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
 
         framework_config = config.get(cls.get_name_framework(), None)
         if framework_config is not None:
+            cls.log_support()
+
             path = framework_config.get('path', '')
             meta = TestMeta(cls)
 

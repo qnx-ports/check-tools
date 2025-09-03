@@ -19,14 +19,12 @@ Provides definitions for running meson tests.
 """
 
 import logging
-import os
 from pathlib import Path
 import subprocess
 from typing import List, Optional, Final
 
 from .definitions import BUILD_DIR
 from .junitxml import JUnitXML
-from .skipped import SkippedSuite
 from .test import ProjectTest
 from .test import TestMeta
 
@@ -46,7 +44,7 @@ class MesonTest(ProjectTest):
         # Meson doesn't have a way to exclude tests. We will need to filter
         # manually.
         command = f'meson test --list -C {BUILD_DIR}'
-        logging.info('MesonTest running command: %s', command)
+        logging.info('%s running command: %s', MesonTest.__name__, command)
         status = None
         output = None
         status, output = subprocess.getstatusoutput(command)
@@ -94,7 +92,7 @@ class MesonTest(ProjectTest):
 
         command = (f'meson test {" ".join(run_tests)} -C {BUILD_DIR} -j '
                    f'{self.num_jobs} {self.opts}')
-        logging.info("MesonTest running command: %s", command)
+        logging.info("%s running command: %s", MesonTest.__name__, command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
@@ -117,5 +115,9 @@ class MesonTest(ProjectTest):
     @classmethod
     def get_name_framework(cls) -> str:
         return 'meson'
+
+    @classmethod
+    def log_support(cls) -> None:
+        cls._warn_partial_support()
 
     _run_impl = _run_mesontest

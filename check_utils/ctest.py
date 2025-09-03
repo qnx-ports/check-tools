@@ -35,18 +35,17 @@ class CTest(ProjectTest):
         f, tmp_report = tempfile.mkstemp(suffix='.xml')
         os.close(f)
 
-        # Build-dir must be absolute.
         p = str(Path(self.path).absolute())
         command = ('ctest '
-                   f'--output-junit={tmp_report} '
+                   f'--output-junit {tmp_report} '
                    f'-j {self.num_jobs} '
-                   f'{self.opts} --build-dir {p} ')
+                   f'{self.opts} ')
         if len(self.meta.get_skipped()) != 0:
             case_names = [case
                           for s in self.meta.get_skipped()
                           for case in s.get_case_names()]
             command += '--exclude-regex "(' + '|'.join(case_names) + ')" '
-        logging.info("CTest running command: %s", command)
+        logging.info("%s running command: %s", CTest.__name__, command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
@@ -54,7 +53,8 @@ class CTest(ProjectTest):
                     stdout=output_f,
                     timeout=self.timeout,
                     check=False,
-                    shell=True
+                    shell=True,
+                    cwd=p
             )
 
         report_xml = JUnitXML(file=tmp_report)
@@ -63,10 +63,15 @@ class CTest(ProjectTest):
 
     @classmethod
     def should_report_skipped_tests(cls) -> None:
-        return False
+        return True
 
     @classmethod
     def get_name_framework(cls) -> str:
         return 'ctest'
+
+    @classmethod
+    def log_support(cls) -> None:
+        cls._warn_partial_support()
+        logging.warning('%s requires a cmake version >=3.21.', cls.__name__)
 
     _run_impl = _run_ctest

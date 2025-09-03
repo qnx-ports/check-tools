@@ -48,7 +48,7 @@ class Catch2Test(BinaryTest):
                           for skipped in self.meta.get_skipped()
                           for case_name in skipped.get_case_names()))
 
-        logging.info("Catch2Test running command: %s", command)
+        logging.info("%s running command: %s", Catch2Test.__name__, command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
                     args=command,
@@ -70,5 +70,9 @@ class Catch2Test(BinaryTest):
     @classmethod
     def get_name_framework(cls) -> str:
         return 'catch2'
+
+    @classmethod
+    def log_support(cls) -> None:
+        cls._warn_partial_support()
 
     _run_impl = _run_catch2test
