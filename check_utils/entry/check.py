@@ -100,11 +100,14 @@ class Main:
         Setup a run of the program.
         """
         if self.verbose == 0:
-            logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
+            logging.basicConfig(stream=sys.stdout)
+            logging.getLogger().setLevel(logging.ERROR)
         elif self.verbose == 1:
-            logging.basicConfig(stream=sys.stdout, level=logging.WARN)
+            logging.basicConfig(stream=sys.stdout)
+            logging.getLogger().setLevel(logging.WARN)
         elif self.verbose == 2:
-            logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+            logging.basicConfig(stream=sys.stdout)
+            logging.getLogger().setLevel(logging.DEBUG)
         else:
             raise check_utils.IllegalArgumentError("Supplied invalid "
                                                    "verbosity.")
