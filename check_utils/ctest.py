@@ -23,7 +23,6 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
-from typing import List
 
 from .junitxml import JUnitXML
 from .test import ProjectTest
@@ -32,16 +31,16 @@ class CTest(ProjectTest):
     """
     Defines how to run and report a ctest test.
     """
-    errored: List[str] = []
-
     def _run_ctest(self) -> None:
         f, tmp_report = tempfile.mkstemp(suffix='.xml')
         os.close(f)
 
+        # Build-dir must be absolute.
+        p = str(Path(self.path).absolute())
         command = ('ctest '
                    f'--output-junit={tmp_report} '
                    f'-j {self.num_jobs} '
-                   f'{self.opts} --build-dir {self.path} ')
+                   f'{self.opts} --build-dir {p} ')
         if len(self.meta.get_skipped()) != 0:
             case_names = [case
                           for s in self.meta.get_skipped()

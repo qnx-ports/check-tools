@@ -59,13 +59,14 @@ def mkstemp_mock(suffix: str = None):
 def test__run_ctest(mocker, output_file, opts, timeout, num_jobs):
     meta = TestMeta(CTest)
     path = ''
+    p = str(Path(path).absolute())
     ctest = CTest(path, output_file, opts, meta, timeout)
     ctest.set_num_jobs(num_jobs)
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'ctest --output-junit={MKSTEMP_REPORT_FILE} -j {num_jobs} {opts} --build-dir {path} ',
+            'args': f'ctest --output-junit={MKSTEMP_REPORT_FILE} -j {num_jobs} {opts} --build-dir {p} ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': timeout,
@@ -111,13 +112,14 @@ def test__run_ctest_skipped(mocker, output_file):
             ]
     meta = TestMeta(CTest, skipped=skip_list)
     path = ''
+    p = str(Path(path).absolute())
     opts = ''
     ctest = CTest(path, output_file, opts, meta, None)
 
     mocker.patch('subprocess.run')
 
     expected_kwargs = {
-            'args': f'ctest --output-junit={MKSTEMP_REPORT_FILE} -j 1 {opts} --build-dir {path} --exclude-regex "(test_foo1|test_foo2|test_foo3)" ',
+            'args': f'ctest --output-junit={MKSTEMP_REPORT_FILE} -j 1 {opts} --build-dir {p} --exclude-regex "(test_foo1|test_foo2|test_foo3)" ',
             'stderr': ANY,
             'stdout': ANY,
             'timeout': None,
