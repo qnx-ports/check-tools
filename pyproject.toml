@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "check_utils"
-version = "0.1.3"
+version = "0.1.4_dev"
 
 [project.scripts]
 cucheck = "check_utils.entry.check:main"
