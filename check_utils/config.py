@@ -30,8 +30,12 @@ from .definitions import START_DIR, PROJECT_DIR, PACKAGE_CONFIG, PROJECT_CONFIG
 def _get_shell(cmd):
     logging.debug('Running command `%s`',
                   cmd)
-    return subprocess.check_output(cmd,
-                                   shell=True).decode('utf-8').strip()
+    try:
+        return subprocess.check_output(cmd,
+                                       shell=True).decode('utf-8').strip()
+    except subprocess.CalledProcessError as cpe:
+        logging.warning(str(cpe))
+        return 1
 
 class Config(dict):
     OPTS_MAP = {
