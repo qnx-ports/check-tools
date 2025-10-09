@@ -83,7 +83,7 @@ norun = true # Will not be added to the test report.
 Run the test suite. If you're testing in `APKBUILD`, `START_DIR` will default to
 the `startdir` path.
 ```bash
-START_DIR=<path-to-config-folder> cuparse
+START_DIR=<path-to-config-folder> cucheck
 ```
 The result of the test run will be written to `test-out/<packge>.xml`.
 
