@@ -26,7 +26,68 @@ python3 -m pip install -e ./
 export PATH=$PATH:$PWD/bin
 ```
 
-## Run the Tests
+## Create a Configuration
+
+Create a `test.toml` file containing values to interface with the underlying
+test framework(s), i.e.,
+```toml
+# test.toml
+
+package = "name"
+timeout = 1800 # Timeout per test file in seconds
+# Prefer not to modify. Set to startdir by default.
+out_dir = "."
+jobs = 4 # OR ${{nproc}} (Processed as an integer literal, not a string)
+
+# Frameworks abstracted to include those run at project level and those run at
+# binary level.
+# Rules for each binary test framework
+[googletest]
+path = """
+build/test/*
+build/bin/*""" # glob, so we can automatically test new releases.
+
+[[googletest.opts]]
+name = "common"
+opt = "--non-default-option"
+[[googletest.opts]]
+name = "build/googletest/sample9_unittest"
+opt = "--non-default-option"
+
+[[googletest.skipped]]
+name = "build/googletest/sample9_unittest"
+norun = false # Assumed false.
+[[googletest.skipped.suites]]
+name = "CustomOutputTest"
+file = "googletest/googletest/samples/sample9_unittest.cc" # For reporting in junitxml.
+[[googletest.skipped.suites.cases]]
+name = "Fails"
+line = "90"
+os = [
+    "7.1.0", # Skip on 7.1.0 targets.
+    "8.0.0"
+]
+arch = [
+    "aarch64le",
+    "x86_64"
+]
+[[googletest.skipped.suites.cases]]
+name = "Succeeds" # Skip on all targets.
+[[googletest.skipped]]
+name = "build/googletest/gtest_no_test_unittest"
+norun = true # Will not be added to the test report.
+```
+
+## Orchestrate a Test Suite
+
+Run the test suite. If you're testing in `APKBUILD`, `START_DIR` will default to
+the `startdir` path.
+```bash
+START_DIR=<path-to-config-folder> cuparse
+```
+The result of the test run will be written to `test-out/<packge>.xml`.
+
+## Test the check-tools Project
 ```bash
 python3 -m pip install -r tests/requirements.txt
 pytest
