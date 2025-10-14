@@ -20,6 +20,7 @@ Read in test.toml files for a package.
 
 import logging
 from pathlib import Path
+import multiprocessing
 import re
 import subprocess
 import tomllib
@@ -27,21 +28,27 @@ from typing import Final, Optional, Self
 
 from .definitions import START_DIR, PROJECT_DIR, PACKAGE_CONFIG, PROJECT_CONFIG
 
-def _get_shell(cmd):
-    logging.debug('Running command `%s`',
-                  cmd)
+def _get_shell(cmd: str, default: str) -> str:
+    logging.debug('Running command `%s`', cmd)
     try:
         return subprocess.check_output(cmd,
                                        shell=True).decode('utf-8').strip()
     except subprocess.CalledProcessError as cpe:
         logging.warning(str(cpe))
-        return 1
+        return default
+
+def _get_nproc() -> str:
+    try:
+        return str(multiprocessing.cpu_count())
+    except NotImplementedError:
+        logging.warning('Could not find the number of cores. Defaulting to 1.')
+        return '1'
 
 class Config(dict):
     OPTS_MAP = {
             'start_dir': str(START_DIR),
             'project_dir': str(PROJECT_DIR),
-            'nproc': _get_shell('nproc')
+            'nproc': _get_nproc()
             }
 
     DEFAULTS: Final[dict] = {
