@@ -5,15 +5,15 @@ Tools for writing the APKBUILD check() function.
 
 ## Project Contents
 
-- `doc`/:           Design documentation, guides, and help.
-- `check_utils/`:   The python module for writing test log parsers for producing
-                    JUnitXML reports.
-- `bin/check.sh`:   Tool for reading package configuration, forwarding arguments
-                    to the corresponding test framework, formatting JUnitXML
-                    output, and returning the result of the test run.
-- `bin/parse_*.sh`: Scripts for reading package configuration, parsing stdout of
-                    a test program, formatting JUnitXML output, and returning
-                    the result of the test run.
+- `doc/`:         Design documentation, guides, and help.
+- `check_utils/`: The python module for writing test log parsers for producing
+                  JUnitXML reports.
+- `cucheck`:      Tool for reading package configuration, forwarding arguments
+                  to the corresponding test framework, formatting JUnitXML
+                  output, and returning the result of the test run.
+- `cuparse_*`:    Scripts for reading package configuration, parsing stdout of
+                  a test program, formatting JUnitXML output, and returning
+                  the result of the test run.
 
 ## Get Started
 
@@ -98,7 +98,7 @@ pytest
 As the self hosted process for QNX is still early in development, support for
 many test frameworks still needs to be added.
 
-The current progress for `bin/check.py`:
+The current progress for `cucheck`:
 - googletest:
   - [x] Workflow is implemented.
   - [x] Workflow is verified on linux.
@@ -113,7 +113,7 @@ The current progress for `bin/check.py`:
   - [ ] Errored tests are added to the resulting JUnitXML.
 - qt-test:
   - [x] Workflow is implemented.
-  - [ ] Workflow is verified on linux.
+  - [x] Workflow is verified on linux.
   - [x] Workflow is verified on QNX.
   - [x] Skipped tests are added to the resulting JUnitXML.
   - [ ] Errored tests are added to the resulting JUnitXML.
