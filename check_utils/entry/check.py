@@ -34,22 +34,27 @@ class Main:
     Entrypoint to the program.
     """
     verbose: int = 0
+    html: bool = False
 
     start_time: str = ''
     # Get package name from cwd if none is provided.
     # Get tmp dir from os.getenv if none is provided.
     config_obj: check_utils.Config = None
 
-    def __init__(self, config: str, project_config: str, verbose: int) -> None:
+    def __init__(self, config: str, project_config: str, verbose: int,
+                 html: bool) -> None:
         """
         Initialize Main.
 
         @param config: Name of the config file.
+        @param project_config: Name of the project-level config file.
         @param verbose: Verbosity level.
+        @param html: Create html report.
         """
         self.config_obj = check_utils.Config.make_config(config, project_config)
 
         self.verbose = verbose
+        self.html = html
 
     # --- PRIVATE ---
     def _generate_outfile_name(self, *args: str, extension: str) -> str:
@@ -122,6 +127,7 @@ class Main:
         """
         self.setup()
 
+        html_report: str = ''
         report: str = self.config_obj['out_dir'] + '/' \
                 + self._generate_outfile_name(
                         self.config_obj['package'],
@@ -131,6 +137,12 @@ class Main:
                 + self._generate_outfile_name(
                         self.config_obj['package'],
                         extension='.txt'
+                        )
+        if self.html:
+            html_report = self.config_obj['out_dir'] + '/' \
+                + self._generate_outfile_name(
+                        self.config_obj['package'],
+                        extension='.html'
                         )
         num_jobs: int = self.config_obj.get('jobs', 1)
         logging.info('Reporting results in %s.', report)
@@ -148,6 +160,10 @@ class Main:
         if is_empty:
             logging.warning("No tests were run!")
             return check_utils.CheckExit.EXIT_SUCCESS
+
+        if self.html:
+            if check_utils.output_html(report, html_report):
+                check_utils.show_html(html_report)
 
         if self.is_success(report):
             return check_utils.CheckExit.EXIT_SUCCESS
@@ -179,9 +195,14 @@ def main():
             default=0,
             help='Verbose output. Maximum value of 2.'
             )
+    parser.add_argument(
+            '-w', '--html',
+            action='store_true',
+            help="Show the report in html.",
+            )
     args = parser.parse_args()
 
-    m = Main(args.config, args.project_config, args.verbose)
+    m = Main(args.config, args.project_config, args.verbose, args.html)
 
     sys.exit(m.main())
 

@@ -28,6 +28,8 @@ from .failed import FailedCase, FailedSuite
 from .errored import ErroredCase, ErroredSuite
 from .passed import PassedCase, PassedSuite
 
+from .html import output_html, show_html
+
 # PRIVATE
 from .gtest import GTest
 from .catch2test import Catch2Test
@@ -75,4 +77,6 @@ __all__ = [
         'ErroredSuite',
         'PassedCase',
         'PassedSuite',
+        'output_html',
+        'show_html',
         ]
