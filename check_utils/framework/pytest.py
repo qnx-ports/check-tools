@@ -15,7 +15,7 @@
 #
 
 """
-Provides definitions for running catch2 tests.
+Provides definitions for running pytest tests.
 """
 
 import os
@@ -24,31 +24,30 @@ import subprocess
 import tempfile
 from typing import List
 
-from .junitxml import JUnitXML
+from ..junitxml import JUnitXML
+from ..test import ProjectTest
 
-from .test import BinaryTest
-
-class QtTest(BinaryTest):
+class PyTest(ProjectTest):
     """
-    Defines how to run and report a qt test.
+    Defines how to run and report a pytest test.
     """
     errored: List[str] = []
 
-    def _run_qttest(self) -> None:
+    def _run_pytest(self) -> None:
         f, tmp_report = tempfile.mkstemp(suffix='.xml')
         os.close(f)
 
-        # Qt-test skips based on the contents of a BLACKLIST file.
-        command = (f'./{self.binary} '
-                   f'-o {tmp_report},junitxml '
-                   f'{self.opts} ')
+        command = ('pytest '
+                   f'--junitxml={tmp_report} '
+                   f'-o junit_family=xunit1 '
+                   f'-n {self.num_jobs} '
+                   f'{self.opts} {self.path} ')
         if len(self.meta.get_skipped()) != 0:
-            command += '-skipblacklisted '
-            with Path(self.binary).parent.joinpath('BLACKLIST').open('a') as f:
-                for skipped in self.meta.get_skipped():
-                    for case_name in skipped.get_case_names():
-                        f.write(f'\n[{case_name}]\nqnx\n')
-
+            case_names = [case
+                          for s in self.meta.get_skipped()
+                          for case in s.get_case_names()]
+            formatted_skipped = [f'not {case}' for case in case_names]
+            command += '-k "' + ' and '.join(formatted_skipped) + '" '
         self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
@@ -60,20 +59,20 @@ class QtTest(BinaryTest):
                     shell=True
             )
 
-        report_obj = JUnitXML(file=tmp_report)
+        report_xml = JUnitXML(file=tmp_report)
         Path(tmp_report).unlink()
-        return report_obj
+        return report_xml
 
     @classmethod
     def should_report_skipped_tests(cls) -> None:
-        return False
+        return True
 
     @classmethod
     def get_name_framework(cls) -> str:
-        return 'qt-test'
+        return 'pytest'
 
     @classmethod
     def log_support(cls) -> None:
         cls._warn_partial_support()
 
-    _run_impl = _run_qttest
+    _run_impl = _run_pytest

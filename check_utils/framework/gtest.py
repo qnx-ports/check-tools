@@ -26,9 +26,9 @@ import subprocess
 import tempfile
 from typing import Generator, List, Optional
 
-from .test import BinaryTest, GenericTest, TestMeta
-from .errored import ErroredCase, ErroredSuite
-from .junitxml import JUnitXML
+from ..test import BinaryTest, GenericTest, TestMeta
+from ..jtype.errored import ErroredCase, ErroredSuite
+from ..junitxml import JUnitXML
 
 class GTest(BinaryTest):
     """

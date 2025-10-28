@@ -23,10 +23,9 @@ from pathlib import Path
 import subprocess
 from typing import List, Optional, Final
 
-from .definitions import BUILD_DIR
-from .junitxml import JUnitXML
-from .test import ProjectTest
-from .test import TestMeta
+from ..definitions import BUILD_DIR
+from ..junitxml import JUnitXML
+from ..test import ProjectTest, TestMeta
 
 class MesonTest(ProjectTest):
     """

@@ -29,7 +29,7 @@ from typing import List, Optional, Generator, Set
 
 from .config import Config
 from .junitxml import JUnitXML
-from .skipped import Skipped, SkippedSuite
+from .jtype.skipped import Skipped, SkippedSuite
 from .system_spec import SystemSpec
 
 class GenericTest(ABC):

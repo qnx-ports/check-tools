@@ -15,7 +15,7 @@
 #
 
 """
-Provides definitions for running ctest tests.
+Provides definitions for running catch2 tests.
 """
 
 import logging
@@ -23,28 +23,31 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+from typing import List
 
-from .junitxml import JUnitXML
-from .test import ProjectTest
+from ..junitxml import JUnitXML
+from ..test import BinaryTest
 
-class CTest(ProjectTest):
+class Catch2Test(BinaryTest):
     """
-    Defines how to run and report a ctest test.
+    Defines how to run and report a catch2 test.
     """
-    def _run_ctest(self) -> None:
+    errored: List[str] = []
+
+    def _run_catch2test(self) -> None:
         f, tmp_report = tempfile.mkstemp(suffix='.xml')
         os.close(f)
 
-        p = str(Path(self.path).absolute())
-        command = ('ctest '
-                   f'--output-junit {tmp_report} '
-                   f'-j {self.num_jobs} '
+        command = (f'./{self.binary} '
+                   f'--reporter xml::out={tmp_report} '
                    f'{self.opts} ')
         if len(self.meta.get_skipped()) != 0:
-            case_names = [case
-                          for s in self.meta.get_skipped()
-                          for case in s.get_case_names()]
-            command += '--exclude-regex "(' + '|'.join(case_names) + ')" '
+            command += '*,~{} ' \
+                    .format(",~" \
+                    .join(case_name
+                          for skipped in self.meta.get_skipped()
+                          for case_name in skipped.get_case_names()))
+
         self._info_cmd(command)
         with open('/dev/null', 'w') as output_f:
             subprocess.run(
@@ -53,25 +56,23 @@ class CTest(ProjectTest):
                     stdout=output_f,
                     timeout=self.timeout,
                     check=False,
-                    shell=True,
-                    cwd=p
+                    shell=True
             )
 
-        report_xml = JUnitXML(file=tmp_report)
+        report_xml = JUnitXML(tmp_report)
         Path(tmp_report).unlink()
         return report_xml
 
     @classmethod
     def should_report_skipped_tests(cls) -> None:
-        return True
+        return False
 
     @classmethod
     def get_name_framework(cls) -> str:
-        return 'ctest'
+        return 'catch2'
 
     @classmethod
     def log_support(cls) -> None:
         cls._warn_partial_support()
-        logging.warning('%s requires a cmake version >=3.21.', cls.__name__)
 
-    _run_impl = _run_ctest
+    _run_impl = _run_catch2test

@@ -23,20 +23,20 @@ from .definitions import IllegalArgumentError, InvalidSubprocessResultError,\
 from .test import GenericTest, TestGenerator, BinaryTest, ProjectTest,\
         TestJobset, TestMeta
 from .system_spec import SystemSpec
-from .skipped import Skipped, SkippedCase, SkippedSuite
-from .failed import FailedCase, FailedSuite
-from .errored import ErroredCase, ErroredSuite
-from .passed import PassedCase, PassedSuite
+from .jtype.skipped import Skipped, SkippedCase, SkippedSuite
+from .jtype.failed import FailedCase, FailedSuite
+from .jtype.errored import ErroredCase, ErroredSuite
+from .jtype.passed import PassedCase, PassedSuite
 
-from .html import output_html, show_html
+from .plugin.html import output_html, show_html
 
 # PRIVATE
-from .gtest import GTest
-from .catch2test import Catch2Test
-from .pytest import PyTest
-from .mesontest import MesonTest
-from .qttest import QtTest
-from .ctest import CTest
+from .framework.gtest import GTest
+from .framework.catch2test import Catch2Test
+from .framework.pytest import PyTest
+from .framework.mesontest import MesonTest
+from .framework.qttest import QtTest
+from .framework.ctest import CTest
 
 from typing import Final
 

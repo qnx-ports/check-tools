@@ -25,10 +25,10 @@ from typing import List, Optional, Self
 import xml.etree.ElementTree as ET
 
 from .definitions import IllegalArgumentError
-from .skipped import SkippedSuite
-from .failed import FailedSuite
-from .errored import ErroredSuite
-from .passed import PassedSuite
+from .jtype.skipped import SkippedSuite
+from .jtype.failed import FailedSuite
+from .jtype.errored import ErroredSuite
+from .jtype.passed import PassedSuite
 
 class JUnitXML:
     _tree: ET.ElementTree = None

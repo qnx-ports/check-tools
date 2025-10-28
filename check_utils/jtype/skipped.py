@@ -21,7 +21,7 @@ test framework, and convert to JUnitXML.
 from functools import cache
 from typing import List, Optional, Self
 
-from .system_spec import SystemSpec
+from ..system_spec import SystemSpec
 
 class SkippedCase:
     name: str = ''
