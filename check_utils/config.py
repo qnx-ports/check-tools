@@ -83,14 +83,14 @@ class Config(dict):
                 temp_conf = tomllib.loads(cls._preprocess(f.read()))
                 conf.update(temp_conf)
         else:
-            logging.warning('project config %s was not found!', project_config)
+            logging.warning('Project config %s was not found!', project_config)
 
         if Path(package_config).exists() and Path(package_config).is_file():
             with open(package_config, "r") as f:
                 temp_conf = tomllib.loads(cls._preprocess(f.read()))
                 conf.update(temp_conf)
         else:
-            logging.warning('package config %s was not found!', package_config)
+            logging.warning('Package config %s was not found!', package_config)
 
         # If neither configuration exists, fallback on KeyError handling...
 

@@ -24,6 +24,7 @@ import datetime
 #from functools import cache
 import logging
 from pathlib import Path
+from rich.logging import RichHandler
 import sys
 from typing import Generator
 
@@ -51,9 +52,24 @@ class Main:
         @param verbose: Verbosity level.
         @param html: Create html report.
         """
+        self.verbose = verbose
+        logging.basicConfig(
+                format="%(message)s",
+                handlers=[RichHandler(show_path=False)])
+        if self.verbose == 0:
+            logging.getLogger().setLevel(logging.ERROR)
+        elif self.verbose == 1:
+            logging.getLogger().setLevel(logging.WARN)
+        elif self.verbose == 2:
+            logging.getLogger().setLevel(logging.INFO)
+        elif self.verbose == 3:
+            logging.getLogger().setLevel(logging.DEBUG)
+        else:
+            raise check_utils.IllegalArgumentError("Supplied invalid "
+                                                   "verbosity.")
+
         self.config_obj = check_utils.Config.make_config(config, project_config)
 
-        self.verbose = verbose
         self.html = html
 
     # --- PRIVATE ---
@@ -104,19 +120,6 @@ class Main:
         """
         Setup a run of the program.
         """
-        if self.verbose == 0:
-            logging.basicConfig(stream=sys.stdout)
-            logging.getLogger().setLevel(logging.ERROR)
-        elif self.verbose == 1:
-            logging.basicConfig(stream=sys.stdout)
-            logging.getLogger().setLevel(logging.WARN)
-        elif self.verbose == 2:
-            logging.basicConfig(stream=sys.stdout)
-            logging.getLogger().setLevel(logging.DEBUG)
-        else:
-            raise check_utils.IllegalArgumentError("Supplied invalid "
-                                                   "verbosity.")
-
         self.start_time = datetime.datetime.now().isoformat()
 
         Path(self.config_obj['out_dir']).mkdir(parents=True, exist_ok=True)
@@ -196,13 +199,19 @@ def main():
             help='Verbose output. Maximum value of 2.'
             )
     parser.add_argument(
+            '-q', '--quiet',
+            action='store_true',
+            help='Only output errors.'
+            )
+    parser.add_argument(
             '-w', '--html',
             action='store_true',
             help="Show the report in html.",
             )
     args = parser.parse_args()
 
-    m = Main(args.config, args.project_config, args.verbose, args.html)
+    m = Main(args.config, args.project_config,
+             0 if args.quiet else args.verbose+1, args.html)
 
     sys.exit(m.main())
 

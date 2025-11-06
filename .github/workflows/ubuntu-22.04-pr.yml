@@ -27,11 +27,8 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -e ./
+          pip install -e '.[tests,tests-extra]'
           install -m755 ./bin/*.sh /usr/local/bin
-          pip install -r requirements.txt
-          pip install -r tests/requirements.txt
-          pip install flake8 pytest-cov
 
       - name: Run tests
         run: |

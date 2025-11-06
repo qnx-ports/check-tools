@@ -22,8 +22,7 @@ root,
 
 ```bash
 python3 -m ensurepip
-python3 -m pip install -r requirements.txt
-python3 -m pip install -e ./
+python3 -m pip install -e '.[tests][html]'
 export PATH=$PATH:$PWD/bin
 ```
 
@@ -90,7 +89,6 @@ The result of the test run will be written to `test-out/<packge>.xml`.
 
 ## Test the check-tools Project
 ```bash
-python3 -m pip install -r tests/requirements.txt
 pytest
 ```
 
