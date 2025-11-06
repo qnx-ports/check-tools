@@ -18,7 +18,6 @@
 Provides an abstraction for system information used to select tests.
 """
 
-import os
 import subprocess
 
 class SystemSpec:

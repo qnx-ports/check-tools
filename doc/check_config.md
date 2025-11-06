@@ -21,21 +21,15 @@ https://docs.pytest.org/en/latest/how-to/usage.html#specifying-tests-selecting-t
 Each test file will be run, and the JUnitXML result from the file will be added
 to the congregate report.
 
-Should add skipped tests to the congregate report.
-
 NOTE: junitxml reports skipped tests on a test case basis. Will need to get the
 list of test cases in order to report a skipped suite, which can run into issues
 if the file itself crashes or deadlocks (gRPC comes to mind). We will have to
 skip these without otherwise reporting them. See norun.
 
-Should add errored tests to the congregate report when it's not already done
-(i.e. for googletest).
-
 Should have a package level test.toml file that applies only to the package,
 and a project level test.toml file that applies to all packages containing
 preset defaults.
 
-Do we want to skip entire files on an arch or os basis?
 ```toml
 # test.toml
 

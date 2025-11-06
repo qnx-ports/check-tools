@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+"""
+Plugin for converting a junit report to html and viewing the result.
+"""
 import logging
 import subprocess
 try:

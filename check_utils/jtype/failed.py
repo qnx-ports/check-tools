@@ -18,41 +18,20 @@
 Provides data formats for failed tests to help convert to JUnitXML.
 """
 from typing import Self, List
+from .jtype import ExecutedCase, Suite
 
-class FailedCase:
-    name: str = ''
-    line: str = ''
-    time: str = '0.0'
-    assertions: str = '0'
+class FailedCase(ExecutedCase):
     message: str = ''
     ftype: str = ''
 
     def __init__(self, name: str, line: str, time: str,
                  assertions: str, message: str, ftype: str) -> None:
-        assert isinstance(name, str)
-        assert isinstance(line, str)
-        assert isinstance(time, str)
-        assert isinstance(assertions, str)
+        super().__init__(name, line, time, assertions)
+
         assert isinstance(message, str)
         assert isinstance(ftype, str)
-        self.name = name
-        self.line = line
-        self.time = time
-        self.assertions = assertions
         self.message = message
         self.ftype = ftype
-
-    def get_name(self):
-        return self.name
-
-    def get_line(self):
-        return self.line
-
-    def get_time(self):
-        return self.time
-
-    def get_assertions(self):
-        return self.assertions
 
     def get_message(self):
         return self.message
@@ -81,34 +60,11 @@ class FailedCase:
         ftype = case.get('ftype', '')
         return cls(name, line, time, assertions, message, ftype)
 
-class FailedSuite:
-    name: str = ''
-    file: str = ''
-    timestamp: str = ''
-    cases: List[FailedCase] = []
+class FailedSuite(Suite):
 
     def __init__(self, name: str, file: str, timestamp: str,
                  cases: List[FailedCase]) -> None:
-        assert isinstance(name, str)
-        assert isinstance(file, str)
-        assert isinstance(timestamp, str)
-        assert isinstance(cases, list)
-        self.name = name
-        self.file = file
-        self.timestamp = timestamp
-        self.cases = cases
-
-    def get_name(self):
-        return self.name
-
-    def get_file(self):
-        return self.file
-
-    def get_timestamp(self):
-        return self.timestamp
-
-    def get_cases(self):
-        return self.cases
+        super().__init__(name, file, timestamp, cases)
 
     @classmethod
     def make_from_dict(cls, suite: dict) -> Self:

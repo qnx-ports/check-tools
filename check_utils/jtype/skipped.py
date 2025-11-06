@@ -18,35 +18,25 @@
 Provides data formats for skipped tests to help communicate with the underlying
 test framework, and convert to JUnitXML.
 """
-from functools import cache
 from typing import List, Optional, Self
 
 from ..system_spec import SystemSpec
+from .jtype import Case, Suite, Bin
 
-class SkippedCase:
-    name: str = ''
-    line: str = ''
+class SkippedCase(Case):
     os: List[str] = []
     arch: List[str] = []
-    message: Optional[str] = None
+    message: str = ''
 
     def __init__(self, name: str, line: str, os: List[str], arch: List[str],
                  message: Optional[str] = None):
-        assert isinstance(name, str)
-        assert isinstance(line, str)
+        super().__init__(name, line)
+
         assert isinstance(os, list)
         assert isinstance(arch, list)
-        self.name = name
-        self.line = line
         self.os = os
         self.arch = arch
-        self.message = message
-
-    def get_name(self) -> str:
-        return self.name
-
-    def get_line(self) -> str:
-        return self.line
+        self.message = message if message is not None else self._format_message(os, arch)
 
     def get_os(self) -> List[str]:
         return self.os
@@ -54,15 +44,15 @@ class SkippedCase:
     def get_arch(self) -> List[str]:
         return self.arch
 
-    def get_message(self) -> str:
-        if self.message is not None:
-            return self.message
-
+    def _format_message(self, os: List[str], arch: List[str]):
         return 'Skipped for '\
-               + ('/'.join(self.os) if len(self.os) != 0 else 'all SDPs')\
+               + ('/'.join(os) if len(os) != 0 else 'all SDPs')\
                + ' on '\
-               + ('/'.join(self.arch) if len(self.arch) != 0 else 'all archs')\
+               + ('/'.join(arch) if len(arch) != 0 else 'all archs')\
                + '.'
+
+    def get_message(self) -> str:
+        return self.message
 
     def is_match(self, spec: SystemSpec) -> bool:
         return (len(self.os) == 0 and len(self.arch) == 0) \
@@ -92,43 +82,11 @@ class SkippedCase:
         arch = case.get('arch', [])
         return cls(name, line, os, arch)
 
-class SkippedSuite:
-    name: str = ''
-    file: str = ''
-    timestamp: str = ''
-    cases: List[SkippedCase]
+class SkippedSuite(Suite):
 
     def __init__(self, name: str, file: str, timestamp: str,
                  cases: List[SkippedCase]):
-        assert isinstance(name, str)
-        assert isinstance(file, str)
-        assert isinstance(timestamp, str)
-        assert isinstance(cases, list)
-        self.name = name
-        self.file = file
-        self.timestamp = timestamp
-        self.cases = cases
-
-    def get_name(self):
-        return self.name
-
-    def get_file(self):
-        return self.file
-
-    def get_timestamp(self):
-        return self.timestamp
-
-    def get_case_names(self) -> List[str]:
-        return [case.get_name() for case in self.cases]
-
-    def get_cases(self):
-        return self.cases
-
-    def get_case(self, case_name) -> Optional[SkippedCase]:
-        for case in self.cases:
-            if case_name == case.get_name:
-                return case
-        return None
+        super().__init__(name, file, timestamp, cases)
 
     def filter_tests(self, spec: SystemSpec) -> Optional[Self]:
         new_cases = []
@@ -160,51 +118,18 @@ class SkippedSuite:
         cases = [SkippedCase.make_from_dict(case) for case in suite.get('cases', ())]
         return cls(name, file, timestamp, cases)
 
-class Skipped:
-    name: str = ''
-    norun: bool = False
-    suites: List[SkippedSuite] = []
+class Skipped(Bin):
+    norun: bool
 
+    # FIXME: Put norun last in signature.
     def __init__(self, name: str, norun: bool, suites: List[SkippedSuite]):
-        assert isinstance(name, str)
+        super().__init__(name, suites)
+
         assert isinstance(norun, bool)
-        assert isinstance(suites, list)
-        self.name = name
         self.norun = norun
-        self.suites = suites
-
-    def get_name(self):
-        return self.name
-
-    def get_case_names(self):
-        case_names = []
-        for suite in self.suites:
-            case_names += suite.get_case_names()
-        return case_names
-
-    def get_suite_names(self):
-        return [suite.get_name() for suite in self.suites]
 
     def is_not_run(self):
         return self.norun
-
-    def get_suites(self):
-        return self.suites
-
-    # Avoid iterating list when possible
-    @cache
-    def get_suite(self, suite_name) -> Optional[SkippedSuite]:
-        for suite in self.suites:
-            if suite.get_name() == suite_name:
-                return suite
-        return None
-
-    def is_empty(self):
-        if len(self.suites) != 0:
-            for suite in self.suites:
-                if len(suite.get_cases()) != 0:
-                    return False
-        return True
 
     def filter_tests(self, spec: SystemSpec) -> Optional[Self]:
         new_suites = []
