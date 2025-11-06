@@ -152,6 +152,7 @@ def test__run_qttest_skipped2(mocker, output_file, blacklist_file):
                             'name': 'case3',
                             'line': '1',
                             'os': ['7.1.0'],
+                            'platform': ['qemu'],
                             'arch': ['x86_64']
                         }]}]})
     meta = TestMeta(QtTest, skipped=skipped.get_suites())

@@ -67,6 +67,11 @@ os = [
     "7.1.0", # Skip on 7.1.0 targets.
     "8.0.0"
 ]
+platform = [
+    "qemu",
+    "rpi5",
+    "rpi4"
+]
 arch = [
     "aarch64le",
     "x86_64"
@@ -89,6 +94,11 @@ os = [
     "7.1.0", # Skip on 7.1.0 targets.
     "8.0.0"
 ]
+platform = [
+    "qemu",
+    "rpi5",
+    "rpi4"
+]
 arch = [
     "aarch64le",
     "x86_64"
@@ -106,6 +116,11 @@ name = "case1"
 os = [
     "7.1.0", # Skip on 7.1.0 targets.
     "8.0.0"
+]
+platform = [
+    "qemu",
+    "rpi5",
+    "rpi4"
 ]
 arch = [
     "aarch64le",

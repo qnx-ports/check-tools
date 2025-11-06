@@ -84,7 +84,7 @@ def main():
                         for skipped_suite in skipped_suites
                         for case_name in skipped_suite.get_case_names()
                         if skipped_suite.get_name() == suite and case_name == case]) == 0:
-                    skipped_suites.append(cu.SkippedSuite(suite, '', timestamp, [cu.SkippedCase(case, '', [], [])]))
+                    skipped_suites.append(cu.SkippedSuite(suite, '', timestamp, [cu.SkippedCase(case, '', [], [], [])]))
 
             out.write(line)
 

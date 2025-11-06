@@ -256,6 +256,7 @@ def test__run_gtest_skipped2(mocker, output_file):
                             'name': '3tseT',
                             'line': '1',
                             'os': ['7.1.0'],
+                            'platform': ['qemu'],
                             'arch': ['x86_64']
                         }]}]})
 

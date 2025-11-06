@@ -126,6 +126,7 @@ def test__run_mesontest_skipped(mocker, output_file, xml_test_log_file):
                                 'name': 'foo2:bar2 / testdir2/test3',
                                 'line': '1',
                                 'os': ['7.1.0'],
+                                'platform': ['qemu'],
                                 'arch': ['x86_64']
                             }]})
             ]

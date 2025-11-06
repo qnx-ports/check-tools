@@ -134,6 +134,7 @@ def test__run_catch2test_skipped2(mocker, output_file):
                             'name': 'case3',
                             'line': '1',
                             'os': ['7.1.0'],
+                            'platform': ['qemu'],
                             'arch': ['x86_64']
                         }]}]})
 

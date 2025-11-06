@@ -108,6 +108,7 @@ def test__run_ctest_skipped(mocker, output_file):
                                 'name': 'test_foo3',
                                 'line': '1',
                                 'os': ['7.1.0'],
+                                'platform': ['qemu'],
                                 'arch': ['x86_64']
                             }]})
             ]

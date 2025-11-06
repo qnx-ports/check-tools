@@ -19,13 +19,26 @@ Provides an abstraction for system information used to select tests.
 """
 
 import subprocess
+import logging
 
 class SystemSpec:
-    os = ''
-    arch = ''
+    os: str
+    arch: str
+    platform: str
 
-    def __init__(self, os: str, arch: str):
+    # For qemu, machine can be QEMU_virt or x86pc (on native x86_64).
+    # FIXME: Find the equivalent for native aarch64
+    # TODO: Test rpi4
+    PLATFORM_DEFAULT = 'qemu'
+    PLATFORM_NAME_MAPPING = (
+            ({'QEMU_virt', 'x86pc'}, 'qemu'),
+            ({'RaspberryPi5'}, 'rpi5'),
+            ({'RaspberryPi4'}, 'rpi4')
+            )
+
+    def __init__(self, os: str, platform: str, arch: str):
         self.os = os
+        self.platform = platform
         self.arch = arch
 
     def get_os(self) -> str:
@@ -33,6 +46,9 @@ class SystemSpec:
 
     def get_arch(self) -> str:
         return self.arch
+
+    def get_platform(self) -> str:
+        return self.platform
 
     @classmethod
     def from_uname(cls):
@@ -44,4 +60,19 @@ class SystemSpec:
         # uname output has the form sysname, nodename, release, version,
         # machine, arch.
         spec = output.strip().split()
-        return cls(spec[2], spec[5])
+        machine = spec[4]
+
+        # Get the platform field.
+        platform = None
+        for machine_vals, mapped_to in cls.PLATFORM_NAME_MAPPING:
+            if machine in machine_vals:
+                platform = mapped_to
+                break
+
+        if platform is None:
+            # Assume that we're running on the default.
+            platform = cls.PLATFORM_DEFAULT
+            logging.warning('Unrecognized machine name %s, assuming platform is'
+                            ' %s.', machine, platform)
+
+        return cls(spec[2], platform, spec[5])

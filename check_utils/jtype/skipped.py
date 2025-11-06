@@ -25,16 +25,19 @@ from .jtype import Case, Suite, Bin
 
 class SkippedCase(Case):
     os: List[str] = []
+    platform: List[str] = []
     arch: List[str] = []
     message: str = ''
 
-    def __init__(self, name: str, line: str, os: List[str], arch: List[str],
-                 message: Optional[str] = None):
+    def __init__(self, name: str, line: str, os: List[str], platform: List[str],
+                 arch: List[str], message: Optional[str] = None):
         super().__init__(name, line)
 
         assert isinstance(os, list)
+        assert isinstance(platform, list)
         assert isinstance(arch, list)
         self.os = os
+        self.platform = platform
         self.arch = arch
         self.message = message if message is not None else self._format_message(os, arch)
 
@@ -48,6 +51,8 @@ class SkippedCase(Case):
         return 'Skipped for '\
                + ('/'.join(os) if len(os) != 0 else 'all SDPs')\
                + ' on '\
+               + ('/'.join(os) if len(os) != 0 else 'all platforms')\
+               + ' on '\
                + ('/'.join(arch) if len(arch) != 0 else 'all archs')\
                + '.'
 
@@ -57,6 +62,7 @@ class SkippedCase(Case):
     def is_match(self, spec: SystemSpec) -> bool:
         return (len(self.os) == 0 and len(self.arch) == 0) \
                 or spec.get_os() in self.os \
+                or spec.get_platform() in self.platform \
                 or spec.get_arch() in self.arch
 
     def filter_tests(self, spec: SystemSpec) -> Optional[Self]:
@@ -79,8 +85,9 @@ class SkippedCase(Case):
         name = case['name']
         line = case.get('line', '')
         os = case.get('os', [])
+        platform = case.get('platform', [])
         arch = case.get('arch', [])
-        return cls(name, line, os, arch)
+        return cls(name, line, os, platform, arch)
 
 class SkippedSuite(Suite):
 
@@ -121,8 +128,7 @@ class SkippedSuite(Suite):
 class Skipped(Bin):
     norun: bool
 
-    # FIXME: Put norun last in signature.
-    def __init__(self, name: str, norun: bool, suites: List[SkippedSuite]):
+    def __init__(self, name: str, suites: List[SkippedSuite], norun: bool):
         super().__init__(name, suites)
 
         assert isinstance(norun, bool)
@@ -155,7 +161,7 @@ class Skipped(Bin):
         }
         """
         name = skipped['name']
-        norun = skipped.get('norun', False)
         suites = [SkippedSuite.make_from_dict(suite)
                   for suite in skipped.get('suites', ())]
-        return cls(name, norun, suites)
+        norun = skipped.get('norun', False)
+        return cls(name, suites, norun)
