@@ -39,6 +39,12 @@ class GenericTest(ABC):
     """
     Abstract class for a runnable test which produces a junit xml report file.
     """
+    THEME_EXTENSIONS: dict = {
+            "on_success": "bold green",
+            "on_failure": "bold red",
+            "on_stderr": "red"
+        }
+
     def __init__(self):
         pass
 

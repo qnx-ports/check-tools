@@ -56,11 +56,7 @@ class Main:
         """
         self.verbose = verbose
 
-        custom_theme = Theme({
-            "on_success": "bold green",
-            "on_failure": "bold red",
-            "on_stderr": "red"
-        })
+        custom_theme = Theme(check_utils.GenericTest.THEME_EXTENSIONS)
         console = Console(theme=custom_theme)
         logging.basicConfig(
                 format="%(message)s",
