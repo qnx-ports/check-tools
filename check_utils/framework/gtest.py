@@ -122,14 +122,13 @@ class GTest(BinaryTest):
                 check=False,
                 shell=True,
                 env=env,
-                text=True,
         )
         self._info_result(command, res)
 
         if Path(tmp_premature_exit).exists():
             end_timestamp = datetime.datetime.now()
             duration = (end_timestamp - timestamp).total_seconds()
-            stderr = res.stderr
+            stderr = res.stderr.decode(errors='ignore')
             logging.info('%s terminated with err %s.', self.binary,
                          stderr)
 

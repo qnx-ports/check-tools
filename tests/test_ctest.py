@@ -49,7 +49,7 @@ def test__run_ctest(mocker, opts, timeout, num_jobs):
     ctest.set_num_jobs(num_jobs)
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'ctest --output-junit {MKSTEMP_REPORT_FILE} -j {num_jobs} {opts} ',
@@ -58,7 +58,6 @@ def test__run_ctest(mocker, opts, timeout, num_jobs):
             'check': False,
             'shell': True,
             'cwd': p,
-            'text': True,
             }
 
     ctest._run_ctest()
@@ -105,7 +104,7 @@ def test__run_ctest_skipped(mocker):
     ctest = CTest(path, opts, meta, None)
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'ctest --output-junit {MKSTEMP_REPORT_FILE} -j 1 {opts} --exclude-regex "(test_foo1|test_foo2|test_foo3)" ',
@@ -114,7 +113,6 @@ def test__run_ctest_skipped(mocker):
             'check': False,
             'shell': True,
             'cwd': p,
-            'text': True,
             }
 
     ctest._run_ctest()

@@ -58,7 +58,6 @@ class QtTest(BinaryTest):
                 timeout=self.timeout,
                 check=False,
                 shell=True,
-                text=True,
         )
         self._info_result(command, res)
 

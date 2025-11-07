@@ -50,7 +50,7 @@ def test__run_catch2test(mocker, opts, timeout):
     catch2test = catch2tests[0]
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'./bin --reporter xml::out={MKSTEMP_REPORT_FILE} {opts} ',
@@ -58,7 +58,6 @@ def test__run_catch2test(mocker, opts, timeout):
             'timeout': timeout,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     catch2test._run_catch2test()
@@ -76,7 +75,7 @@ def test__run_catch2test_skipped1(mocker):
     catch2test = catch2tests[0]
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'./bin1 --reporter xml::out={MKSTEMP_REPORT_FILE}  ',
@@ -84,7 +83,6 @@ def test__run_catch2test_skipped1(mocker):
             'timeout': None,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     catch2test._run_catch2test()
@@ -131,7 +129,7 @@ def test__run_catch2test_skipped2(mocker):
     catch2test = catch2tests[0]
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'./bin2 --reporter xml::out={MKSTEMP_REPORT_FILE}  *,~case1,~case2,~case3 ',
@@ -139,7 +137,6 @@ def test__run_catch2test_skipped2(mocker):
             'timeout': None,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     catch2test._run_catch2test()

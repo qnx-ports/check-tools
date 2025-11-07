@@ -57,7 +57,6 @@ class Catch2Test(BinaryTest):
                         else False,
                 check=False,
                 shell=True,
-                text=True,
         )
         self._info_result(command, res)
 

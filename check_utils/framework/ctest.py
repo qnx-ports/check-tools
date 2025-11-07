@@ -55,7 +55,6 @@ class CTest(ProjectTest):
                 check=False,
                 shell=True,
                 cwd=p,
-                text=True,
         )
         self._info_result(command, res)
 

@@ -48,7 +48,7 @@ def test__run_pytest(mocker, opts, timeout, num_jobs):
     pytest.set_num_jobs(num_jobs)
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'pytest --junitxml={MKSTEMP_REPORT_FILE} -o junit_family=xunit1 -n {num_jobs} {opts} {path} ',
@@ -56,7 +56,6 @@ def test__run_pytest(mocker, opts, timeout, num_jobs):
             'timeout': timeout,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     pytest._run_pytest()
@@ -101,7 +100,7 @@ def test__run_pytest_skipped(mocker):
     pytest = PyTest(path, opts, meta, None)
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'pytest --junitxml={MKSTEMP_REPORT_FILE} -o junit_family=xunit1 -n 1 {opts} {path} -k "not test_foo1 and not test_foo2 and not test_foo3" ',
@@ -109,7 +108,6 @@ def test__run_pytest_skipped(mocker):
             'timeout': None,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     pytest._run_pytest()

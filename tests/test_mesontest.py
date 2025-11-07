@@ -62,7 +62,7 @@ def test__run_mesontest(mocker, xml_test_log_file, opts, timeout, num_jobs):
     JUnitXML.make_from_passed([]).write(xml_test_log_file)
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'meson test testdir1/test1 testdir1/test2 testdir2/test3 testdir2/test4 -C {BUILD_DIR} -j {num_jobs} {opts}',
@@ -70,7 +70,6 @@ def test__run_mesontest(mocker, xml_test_log_file, opts, timeout, num_jobs):
             'timeout': timeout,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     mesontest._run_mesontest()
@@ -123,7 +122,7 @@ def test__run_mesontest_skipped(mocker, xml_test_log_file):
     JUnitXML.make_from_passed([]).write(xml_test_log_file)
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'meson test testdir2/test4 -C {BUILD_DIR} -j 1 ',
@@ -131,7 +130,6 @@ def test__run_mesontest_skipped(mocker, xml_test_log_file):
             'timeout': None,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     mesontest._run_mesontest()

@@ -84,13 +84,13 @@ class GenericTest(ABC):
                          cls.__name__, cls._preprocess(cmd),
                          res.returncode,
                          cls._preprocess(os.strerror(res.returncode)),
-                         cls._preprocess(res.stdout),
-                         cls._preprocess(res.stderr))
+                         cls._preprocess(res.stdout.decode(errors='ignore')),
+                         cls._preprocess(res.stderr.decode(errors='ignore')))
         else:
             logging.info('%s command %s '
                          '[on_success]succeeded[/on_success]:\n%s',
                          cls.__name__, cls._preprocess(cmd),
-                         cls._preprocess(res.stdout))
+                         cls._preprocess(res.stdout.decode(errors='ignore')))
 
     # --- PUBLIC ---
     def run(self) -> JUnitXML:

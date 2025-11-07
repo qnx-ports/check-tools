@@ -100,7 +100,6 @@ class MesonTest(ProjectTest):
                 timeout=self.timeout,
                 check=False,
                 shell=True,
-                text=True,
         )
         self._info_result(command, res)
 

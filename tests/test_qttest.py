@@ -65,7 +65,7 @@ def test__run_qttest(mocker, opts, timeout):
     qttest = qttests[0]
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'./bin -o {MKSTEMP_REPORT_FILE},junitxml {opts} ',
@@ -73,7 +73,6 @@ def test__run_qttest(mocker, opts, timeout):
             'timeout': timeout,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     qttest._run_qttest()
@@ -93,7 +92,7 @@ def test__run_qttest_skipped1(mocker):
     qttest = qttests[0]
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'./bin1 -o {MKSTEMP_REPORT_FILE},junitxml  ',
@@ -101,7 +100,6 @@ def test__run_qttest_skipped1(mocker):
             'timeout': None,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     qttest._run_qttest()
@@ -150,7 +148,7 @@ def test__run_qttest_skipped2(mocker, blacklist_file):
     qttest = qttests[0]
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'./bin2 -o {MKSTEMP_REPORT_FILE},junitxml  -skipblacklisted ',
@@ -158,7 +156,6 @@ def test__run_qttest_skipped2(mocker, blacklist_file):
             'timeout': None,
             'check': False,
             'shell': True,
-            'text': True,
             }
 
     qttest._run_qttest()

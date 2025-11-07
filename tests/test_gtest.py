@@ -72,7 +72,7 @@ def test__run_gtest(mocker, opts, timeout, blurb):
     assert len(gtest_tests) == 4
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs1 = {
             'args': f'./bin --gtest_output="xml:{MKSTEMP_REPORT_FILE}" --gtest_filter="Foo.Test1" {opts}',
@@ -81,7 +81,6 @@ def test__run_gtest(mocker, opts, timeout, blurb):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs2 = {
@@ -91,7 +90,6 @@ def test__run_gtest(mocker, opts, timeout, blurb):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs3 = {
@@ -101,7 +99,6 @@ def test__run_gtest(mocker, opts, timeout, blurb):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs4 = {
@@ -111,7 +108,6 @@ def test__run_gtest(mocker, opts, timeout, blurb):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     for gtest in gtest_tests:
@@ -144,7 +140,7 @@ def test__run_gtest_skipped1(mocker):
     assert len(gtest_tests) == 4
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs1 = {
             'args': f'./bin1 --gtest_output="xml:{MKSTEMP_REPORT_FILE}" --gtest_filter="Foo.Test1" ',
@@ -153,7 +149,6 @@ def test__run_gtest_skipped1(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs2 = {
@@ -163,7 +158,6 @@ def test__run_gtest_skipped1(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs3 = {
@@ -173,7 +167,6 @@ def test__run_gtest_skipped1(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs4 = {
@@ -183,7 +176,6 @@ def test__run_gtest_skipped1(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     for gtest in gtest_tests:
@@ -246,7 +238,7 @@ def test__run_gtest_skipped2(mocker):
     assert len(gtest_tests) == 1
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs = {
             'args': f'./bin2 --gtest_output="xml:{MKSTEMP_REPORT_FILE}" --gtest_filter="Bar.Ttse4" ',
@@ -255,7 +247,6 @@ def test__run_gtest_skipped2(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     for gtest in gtest_tests:
@@ -283,7 +274,7 @@ def test__run_gtest_errored1(mocker):
     assert len(gtest_tests) == 4
 
     run_mock = mocker.patch('subprocess.run')
-    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "".encode(), "".encode())
 
     expected_kwargs1 = {
             'args': f'./bin1 --gtest_output="xml:{MKSTEMP_REPORT_FILE}" --gtest_filter="Foo.Test1" ',
@@ -292,7 +283,6 @@ def test__run_gtest_errored1(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs2 = {
@@ -302,7 +292,6 @@ def test__run_gtest_errored1(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs3 = {
@@ -312,7 +301,6 @@ def test__run_gtest_errored1(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     expected_kwargs4 = {
@@ -322,7 +310,6 @@ def test__run_gtest_errored1(mocker):
             'check': False,
             'shell': True,
             'env': ANY,
-            'text': True,
             }
 
     errored_obj = JUnitXML.make_from_passed([])
