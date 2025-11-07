@@ -18,6 +18,7 @@
 Provides definitions for running catch2 tests.
 """
 
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -49,15 +50,17 @@ class QtTest(BinaryTest):
                         f.write(f'\n[{case_name}]\nqnx\n')
 
         self._info_cmd(command)
-        with open('/dev/null', 'w') as output_f:
-            subprocess.run(
-                    args=command,
-                    stderr=output_f,
-                    stdout=output_f,
-                    timeout=self.timeout,
-                    check=False,
-                    shell=True
-            )
+        res = subprocess.run(
+                args=command,
+                capture_output=True \
+                        if logging.getLogger().isEnabledFor(logging.INFO) \
+                        else False,
+                timeout=self.timeout,
+                check=False,
+                shell=True,
+                text=True,
+        )
+        self._info_result(command, res)
 
         report_obj = JUnitXML(file=tmp_report)
         Path(tmp_report).unlink()

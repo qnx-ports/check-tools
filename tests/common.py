@@ -24,4 +24,5 @@ import sys
 
 TEST_DIR = Path(__file__).parent.resolve()
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(stream=sys.stdout)
+logging.getLogger().setLevel(logging.DEBUG)

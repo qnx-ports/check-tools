@@ -27,22 +27,6 @@ from unittest.mock import ANY
 from check_utils import MesonTest, SkippedSuite, BUILD_DIR, TestMeta, JUnitXML
 import common
 
-OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
-
-@pytest.fixture()
-def output_file():
-    output_path = Path(OUTPUT_FILE)
-
-    # Setup
-    if (output_path.exists()):
-        output_path.unlink()
-
-    yield OUTPUT_FILE
-
-    # Teardown
-    if (output_path.exists()):
-        output_path.unlink()
-
 @pytest.fixture()
 def xml_test_log_file():
     xml_test_log_path = BUILD_DIR.joinpath(MesonTest.XML_TEST_LOG)
@@ -62,7 +46,7 @@ def xml_test_log_file():
     ('', None, 1), ('--my-custom-opt1 --my-custom-opt2', None, 2),
     ('', 300, 3), ('--my-custom-opt1 --my-custom-opt2', 300, 4)
     ])
-def test__run_mesontest(mocker, output_file, xml_test_log_file, opts, timeout, num_jobs):
+def test__run_mesontest(mocker, xml_test_log_file, opts, timeout, num_jobs):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'foo1:bar1 / testdir1/test1\n'
@@ -71,28 +55,29 @@ def test__run_mesontest(mocker, output_file, xml_test_log_file, opts, timeout, n
                                          'foo2:bar2 / testdir2/test4')
 
     meta = TestMeta(MesonTest)
-    mesontest = MesonTest('', output_file, opts, meta, timeout)
+    mesontest = MesonTest('', opts, meta, timeout)
     mesontest.set_num_jobs(num_jobs)
 
     # Initialize test report that would normally be created by meson.
     JUnitXML.make_from_passed([]).write(xml_test_log_file)
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'meson test testdir1/test1 testdir1/test2 testdir2/test3 testdir2/test4 -C {BUILD_DIR} -j {num_jobs} {opts}',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     mesontest._run_mesontest()
 
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
-def test__run_mesontest_skipped(mocker, output_file, xml_test_log_file):
+def test__run_mesontest_skipped(mocker, xml_test_log_file):
     getstatusoutput_mock = mocker.patch('subprocess.getstatusoutput')
     getstatusoutput_mock.return_value = (0,
                                          'foo1:bar1 / testdir1/test1\n'
@@ -132,20 +117,21 @@ def test__run_mesontest_skipped(mocker, output_file, xml_test_log_file):
             ]
 
     meta = TestMeta(MesonTest, skipped=skip_list)
-    mesontest = MesonTest('', output_file, '', meta, None)
+    mesontest = MesonTest('', '', meta, None)
 
     # Initialize test report that would normally be created by meson.
     JUnitXML.make_from_passed([]).write(xml_test_log_file)
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'meson test testdir2/test4 -C {BUILD_DIR} -j 1 ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     mesontest._run_mesontest()

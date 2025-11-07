@@ -24,7 +24,9 @@ import datetime
 #from functools import cache
 import logging
 from pathlib import Path
+from rich.console import Console
 from rich.logging import RichHandler
+from rich.theme import Theme
 import sys
 from typing import Generator
 
@@ -53,9 +55,19 @@ class Main:
         @param html: Create html report.
         """
         self.verbose = verbose
+
+        custom_theme = Theme({
+            "on_success": "bold green",
+            "on_failure": "bold red",
+            "on_stderr": "red"
+        })
+        console = Console(theme=custom_theme)
         logging.basicConfig(
                 format="%(message)s",
-                handlers=[RichHandler(show_path=False)])
+                datefmt="[%X]",
+                handlers=[RichHandler(
+                    show_path=False, keywords=[], console=console,
+                    markup=True)])
         if self.verbose == 0:
             logging.getLogger().setLevel(logging.ERROR)
         elif self.verbose == 1:
@@ -88,7 +100,6 @@ class Main:
 
     def _generate_test_jobsets(
             self,
-            output: str
             ) -> Generator[check_utils.TestJobset, None, None]:
         """
         Generate all tests to run.
@@ -99,7 +110,6 @@ class Main:
         spec = check_utils.SystemSpec.from_uname()
         for test_framework in check_utils.TEST_FRAMEWORK_BUILTINS:
             jobset = test_framework.make_test_jobset(
-                    output,
                     spec,
                     self.config_obj
                     )
@@ -136,11 +146,12 @@ class Main:
                         self.config_obj['package'],
                         extension='.xml'
                         )
-        output: str = self.config_obj['out_dir'] + '/' \
-                + self._generate_outfile_name(
-                        self.config_obj['package'],
-                        extension='.txt'
-                        )
+        # TODO: Pass the outfile name to a log handler.
+        #output: str = self.config_obj['out_dir'] + '/' \
+        #        + self._generate_outfile_name(
+        #                self.config_obj['package'],
+        #                extension='.txt'
+        #                )
         if self.html:
             html_report = self.config_obj['out_dir'] + '/' \
                 + self._generate_outfile_name(
@@ -149,15 +160,16 @@ class Main:
                         )
         num_jobs: int = self.config_obj.get('jobs', 1)
         logging.info('Reporting results in %s.', report)
-        logging.info('Reporting output in %s.', output)
+        #logging.info('Reporting output in %s.', output)
         logging.info('Using %d jobs.', num_jobs)
 
         combined_report_obj = check_utils.JUnitXML.make_from_passed([])
         is_empty = True
-        for test in self._generate_test_jobsets(output):
+        for test in self._generate_test_jobsets():
             is_empty = False
             combined_report_obj += test.run(num_jobs)
 
+        logging.debug('Compiling the report.')
         combined_report_obj.write(report)
 
         if is_empty:

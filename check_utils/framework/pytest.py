@@ -18,6 +18,7 @@
 Provides definitions for running pytest tests.
 """
 
+import logging
 import os
 from pathlib import Path
 import subprocess
@@ -49,15 +50,17 @@ class PyTest(ProjectTest):
             formatted_skipped = [f'not {case}' for case in case_names]
             command += '-k "' + ' and '.join(formatted_skipped) + '" '
         self._info_cmd(command)
-        with open('/dev/null', 'w') as output_f:
-            subprocess.run(
-                    args=command,
-                    stderr=output_f,
-                    stdout=output_f,
-                    timeout=self.timeout,
-                    check=False,
-                    shell=True
-            )
+        res = subprocess.run(
+                args=command,
+                capture_output=True \
+                        if logging.getLogger().isEnabledFor(logging.INFO) \
+                        else False,
+                timeout=self.timeout,
+                check=False,
+                shell=True,
+                text=True,
+        )
+        self._info_result(command, res)
 
         report_xml = JUnitXML(file=tmp_report)
         Path(tmp_report).unlink()

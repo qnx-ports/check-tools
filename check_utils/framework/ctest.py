@@ -46,16 +46,18 @@ class CTest(ProjectTest):
                           for case in s.get_case_names()]
             command += '--exclude-regex "(' + '|'.join(case_names) + ')" '
         self._info_cmd(command)
-        with open('/dev/null', 'w') as output_f:
-            subprocess.run(
-                    args=command,
-                    stderr=output_f,
-                    stdout=output_f,
-                    timeout=self.timeout,
-                    check=False,
-                    shell=True,
-                    cwd=p
-            )
+        res = subprocess.run(
+                args=command,
+                timeout=self.timeout,
+                capture_output=True \
+                        if logging.getLogger().isEnabledFor(logging.INFO) \
+                        else False,
+                check=False,
+                shell=True,
+                cwd=p,
+                text=True,
+        )
+        self._info_result(command, res)
 
         report_xml = JUnitXML(file=tmp_report)
         Path(tmp_report).unlink()

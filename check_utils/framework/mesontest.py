@@ -36,9 +36,9 @@ class MesonTest(ProjectTest):
     errored: List[str] = []
     tests: List[str] = []
 
-    def __init__(self, path: str, output: str, opts: str,
+    def __init__(self, path: str, opts: str,
                  meta: TestMeta, timeout: Optional[int] = None):
-        super().__init__(path, output, opts, meta, timeout)
+        super().__init__(path, opts, meta, timeout)
 
         # Meson doesn't have a way to exclude tests. We will need to filter
         # manually.
@@ -92,15 +92,17 @@ class MesonTest(ProjectTest):
         command = (f'meson test {" ".join(run_tests)} -C {BUILD_DIR} -j '
                    f'{self.num_jobs} {self.opts}')
         self._info_cmd(command)
-        with open('/dev/null', 'w') as output_f:
-            subprocess.run(
-                    args=command,
-                    stderr=output_f,
-                    stdout=output_f,
-                    timeout=self.timeout,
-                    check=False,
-                    shell=True
-            )
+        res = subprocess.run(
+                args=command,
+                capture_output=True \
+                        if logging.getLogger().isEnabledFor(logging.INFO) \
+                        else False,
+                timeout=self.timeout,
+                check=False,
+                shell=True,
+                text=True,
+        )
+        self._info_result(command, res)
 
         # Meson outputs as JUnit XML automatically.
         # FIXME: Not currently cleaning up test paths...

@@ -30,21 +30,6 @@ from check_utils import PyTest, SkippedSuite, JUnitXML, TestMeta
 import common
 
 MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
-OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
-
-@pytest.fixture()
-def output_file():
-    output_path = Path(OUTPUT_FILE)
-
-    # Setup
-    if (output_path.exists()):
-        output_path.unlink()
-
-    yield OUTPUT_FILE
-
-    # Teardown
-    if (output_path.exists()):
-        output_path.unlink()
 
 def mkstemp_mock(suffix: str = None):
     tmp_xml = JUnitXML.make_from_passed([])
@@ -56,21 +41,22 @@ def mkstemp_mock(suffix: str = None):
     ('', None, 1), ('--my-custom-opt1 --my-custom-opt2', None, 2),
     ('', 300, 3), ('--my-custom-opt1 --my-custom-opt2', 300, 4)
     ])
-def test__run_pytest(mocker, output_file, opts, timeout, num_jobs):
+def test__run_pytest(mocker, opts, timeout, num_jobs):
     meta = TestMeta(PyTest)
     path = ''
-    pytest = PyTest(path, output_file, opts, meta, timeout)
+    pytest = PyTest(path, opts, meta, timeout)
     pytest.set_num_jobs(num_jobs)
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'pytest --junitxml={MKSTEMP_REPORT_FILE} -o junit_family=xunit1 -n {num_jobs} {opts} {path} ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     pytest._run_pytest()
@@ -78,7 +64,7 @@ def test__run_pytest(mocker, output_file, opts, timeout, num_jobs):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
 @patch.object(tempfile, 'mkstemp', mkstemp_mock)
-def test__run_pytest_skipped(mocker, output_file):
+def test__run_pytest_skipped(mocker):
     skip_list = [
             SkippedSuite.make_from_dict(
                 {
@@ -112,17 +98,18 @@ def test__run_pytest_skipped(mocker, output_file):
     meta = TestMeta(PyTest, skipped=skip_list)
     path = ''
     opts = ''
-    pytest = PyTest(path, output_file, opts, meta, None)
+    pytest = PyTest(path, opts, meta, None)
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'pytest --junitxml={MKSTEMP_REPORT_FILE} -o junit_family=xunit1 -n 1 {opts} {path} -k "not test_foo1 and not test_foo2 and not test_foo3" ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     pytest._run_pytest()

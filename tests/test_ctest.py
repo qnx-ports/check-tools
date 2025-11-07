@@ -30,21 +30,6 @@ from check_utils import CTest, SkippedSuite, JUnitXML, TestMeta
 import common
 
 MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
-OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
-
-@pytest.fixture()
-def output_file():
-    output_path = Path(OUTPUT_FILE)
-
-    # Setup
-    if (output_path.exists()):
-        output_path.unlink()
-
-    yield OUTPUT_FILE
-
-    # Teardown
-    if (output_path.exists()):
-        output_path.unlink()
 
 def mkstemp_mock(suffix: str = None):
     tmp_xml = JUnitXML.make_from_passed([])
@@ -56,23 +41,24 @@ def mkstemp_mock(suffix: str = None):
     ('', None, 1), ('--my-custom-opt1 --my-custom-opt2', None, 2),
     ('', 300, 3), ('--my-custom-opt1 --my-custom-opt2', 300, 4)
     ])
-def test__run_ctest(mocker, output_file, opts, timeout, num_jobs):
+def test__run_ctest(mocker, opts, timeout, num_jobs):
     meta = TestMeta(CTest)
     path = ''
     p = str(Path(path).absolute())
-    ctest = CTest(path, output_file, opts, meta, timeout)
+    ctest = CTest(path, opts, meta, timeout)
     ctest.set_num_jobs(num_jobs)
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'ctest --output-junit {MKSTEMP_REPORT_FILE} -j {num_jobs} {opts} ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': timeout,
             'check': False,
             'shell': True,
-            'cwd': p
+            'cwd': p,
+            'text': True,
             }
 
     ctest._run_ctest()
@@ -80,7 +66,7 @@ def test__run_ctest(mocker, output_file, opts, timeout, num_jobs):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
 @patch.object(tempfile, 'mkstemp', mkstemp_mock)
-def test__run_ctest_skipped(mocker, output_file):
+def test__run_ctest_skipped(mocker):
     # In reality ctest generates junit with a single suite of name '(empty)'
     skip_list = [
             SkippedSuite.make_from_dict(
@@ -116,18 +102,19 @@ def test__run_ctest_skipped(mocker, output_file):
     path = ''
     p = str(Path(path).absolute())
     opts = ''
-    ctest = CTest(path, output_file, opts, meta, None)
+    ctest = CTest(path, opts, meta, None)
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'ctest --output-junit {MKSTEMP_REPORT_FILE} -j 1 {opts} --exclude-regex "(test_foo1|test_foo2|test_foo3)" ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': None,
             'check': False,
             'shell': True,
-            'cwd': p
+            'cwd': p,
+            'text': True,
             }
 
     ctest._run_ctest()

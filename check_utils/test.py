@@ -24,7 +24,10 @@ from functools import cache
 import glob
 import logging
 from multiprocessing.pool import ThreadPool
+import os
 from pathlib import Path
+import re
+import subprocess
 from typing import List, Optional, Generator, Set
 
 from .config import Config
@@ -34,12 +37,10 @@ from .system_spec import SystemSpec
 
 class GenericTest(ABC):
     """
-    Abstract class for a runnable test which produces a junit xml report and
-    command-line output file.
+    Abstract class for a runnable test which produces a junit xml report file.
     """
-    # FIXME: Disabled to enable concurrency.
-    def __init__(self, output):
-        self.output = output
+    def __init__(self):
+        pass
 
     # --- PRIVATE ---
     @abstractmethod
@@ -52,14 +53,38 @@ class GenericTest(ABC):
         raise NotImplementedError('_run_impl() not implemented!')
 
     @classmethod
+    def _preprocess(cls, s: str) -> str:
+        """
+        Remove rich markup from string.
+        """
+        return re.sub(r'\[', r'\\[', s)
+
+    @classmethod
     def _warn_partial_support(cls) -> None:
         logging.warning('%s is not yet fully supported! See '
                         'https://github.com/qnx-ports/check-tools?tab=readme-ov'
                         '-file#framework-support', cls.__name__)
 
     @classmethod
-    def _info_cmd(cls, cmd) -> None:
-        logging.info('%s running command: %s', cls.__name__, cmd)
+    def _info_cmd(cls, cmd: str) -> None:
+        logging.info('%s running command: %s', cls.__name__,
+                     cls._preprocess(cmd))
+
+    @classmethod
+    def _info_result(cls, cmd: str, res: subprocess.CompletedProcess) -> None:
+        if res.returncode != 0:
+            logging.info('%s command %s [on_failure]failed[/on_failure] with '
+                         'status code %d (%s):\n%s\n[on_stderr]%s[on_stderr]',
+                         cls.__name__, cls._preprocess(cmd),
+                         res.returncode,
+                         cls._preprocess(os.strerror(res.returncode)),
+                         cls._preprocess(res.stdout),
+                         cls._preprocess(res.stderr))
+        else:
+            logging.info('%s command %s '
+                         '[on_success]succeeded[/on_success]:\n%s',
+                         cls.__name__, cls._preprocess(cmd),
+                         cls._preprocess(res.stdout))
 
     # --- PUBLIC ---
     def run(self) -> JUnitXML:
@@ -200,7 +225,6 @@ class TestGenerator(ABC):
     @abstractmethod
     def make_test_jobset(
             cls,
-            output: str,
             spec: SystemSpec,
             config: Config,
             ) -> Optional[TestJobset]:
@@ -233,10 +257,9 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
     meta: TestMeta
     timeout: Optional[int] = None
 
-    def __init__(self, binary: str,
-                 output: str, opts: str,
+    def __init__(self, binary: str, opts: str,
                  meta: TestMeta, timeout: Optional[int] = None):
-        super().__init__(output)
+        super().__init__()
         self.binary = binary
         self.opts = opts
         self.meta = meta
@@ -246,12 +269,11 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
     @classmethod
     def make_test_jobset(
             cls,
-            output: str,
             spec: SystemSpec,
             config: Config,
             ) -> Optional[TestJobset]:
-        logging.info('Generating binary test list for %s.',
-                     cls.get_name_framework())
+        logging.debug('Generating binary test list for %s.',
+                      cls.get_name_framework())
         tests: List[GenericTest] = []
 
         framework_config = config.get(cls.get_name_framework(), None)
@@ -275,7 +297,7 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
 
             for binary in binaries:
                 if meta.is_not_run(binary):
-                    logging.info('Skipping binary %s.', binary)
+                    logging.debug('Skipping binary %s.', binary)
                     continue
 
                 # Custom options
@@ -289,19 +311,18 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
                         binary_opts = opt_iter['opt']
                 opts = f'{common_opts} {binary_opts}'
 
-                tests.extend(cls._generate_test_list(binary, output, opts,
+                tests.extend(cls._generate_test_list(binary, opts,
                                                    meta,
                                                    config.get('timeout', None)))
             return BinaryTestJobset(meta, tests)
         else:
-            logging.info('Could not find configuration for framework %s.',
-                         cls.get_name_framework())
+            logging.debug('Could not find configuration for framework %s.',
+                          cls.get_name_framework())
         return None
 
     # --- PRIVATE ---
     @classmethod
-    def _generate_test_list(cls, binary: str, output: str,
-                            opts: str, meta: TestMeta,
+    def _generate_test_list(cls, binary: str, opts: str, meta: TestMeta,
                             timeout: Optional[int] = None) -> Generator[
                                     GenericTest, None, None]:
         """
@@ -309,7 +330,7 @@ class BinaryTest(GenericTest, TestGenerator, ABC):
         By default forwards arguments to underlying constructor. Intended to be
         overriden to allow more granular jobs.
         """
-        yield cls(binary, output, opts, meta, timeout)
+        yield cls(binary, opts, meta, timeout)
 
 class ProjectTest(GenericTest, TestGenerator, ABC):
     """
@@ -322,9 +343,9 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
     timeout: Optional[int] = None
     num_jobs: int
 
-    def __init__(self, path: str, output: str, opts: str,
+    def __init__(self, path: str, opts: str,
                  meta: TestMeta, timeout: Optional[int] = None):
-        super().__init__(output)
+        super().__init__()
         self.path = path
         self.opts = opts
         self.meta = meta
@@ -335,12 +356,11 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
     @classmethod
     def make_test_jobset(
             cls,
-            output: str,
             spec: SystemSpec,
             config: Config,
             ) -> Optional[TestJobset]:
-        logging.info('Generating project test list for %s.',
-                     cls.get_name_framework())
+        logging.debug('Generating project test list for %s.',
+                      cls.get_name_framework())
         tests: List[GenericTest] = []
 
         framework_config = config.get(cls.get_name_framework(), None)
@@ -360,12 +380,12 @@ class ProjectTest(GenericTest, TestGenerator, ABC):
 
             opts = framework_config.get('opt', '')
 
-            tests.append(cls(path, output, opts, meta,
+            tests.append(cls(path, opts, meta,
                              config.get('timeout', None)))
             return ProjectTestJobset(meta, tests)
         else:
-            logging.info('Could not find configuration for framework %s.',
-                         cls.get_name_framework())
+            logging.debug('Could not find configuration for framework %s.',
+                          cls.get_name_framework())
 
         return None
 

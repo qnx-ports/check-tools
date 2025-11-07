@@ -38,16 +38,15 @@ class GTest(BinaryTest):
     case: str
     skipped_tests: List[str]
 
-    def __init__(self, binary: str, suite: str, case: str, output: str,
+    def __init__(self, binary: str, suite: str, case: str,
                  opts: str, meta: TestMeta, timeout: Optional[int] = None):
-        super().__init__(binary, output, opts, meta, timeout)
+        super().__init__(binary, opts, meta, timeout)
 
         self.suite = suite
         self.case = case
 
     @classmethod
-    def _generate_test_list(cls, binary: str, output: str,
-                            opts: str, meta: TestMeta,
+    def _generate_test_list(cls, binary: str, opts: str, meta: TestMeta,
                             timeout: Optional[int] = None) -> Generator[
                                     GenericTest, None, None]:
         # Googletest uniquely identifies tests with the pattern `<suite>.<case>`
@@ -90,7 +89,7 @@ class GTest(BinaryTest):
                 case_full = suite + '.' + case
 
                 if case_full not in skipped_tests:
-                    yield cls(binary, suite, case, output, opts, meta, timeout)
+                    yield cls(binary, suite, case, opts, meta, timeout)
 
     def _run_gtest(self) -> None:
         report_xml: Optional[JUnitXML] = None
@@ -111,31 +110,26 @@ class GTest(BinaryTest):
         env = os.environ.copy()
         env['TEST_PREMATURE_EXIT_FILE'] = tmp_premature_exit
 
-        # subprocess.run does not support io.StringIO stderr
-        stderr_f, tmp_stderr = tempfile.mkstemp()
-
         command = (f'./{self.binary} '
                    f'--gtest_output="xml:{tmp_report}" '
                    f'--gtest_filter="{case_full}" '
                    f'{self.opts}')
         self._info_cmd(command)
-        with open('/dev/null', 'w') as output_f:
-            subprocess.run(
-                    args=command,
-                    stdout=output_f,
-                    stderr=stderr_f,
-                    timeout=self.timeout,
-                    check=False,
-                    shell=True,
-                    env=env
-            )
-        os.close(stderr_f)
+        res = subprocess.run(
+                args=command,
+                capture_output=True,
+                timeout=self.timeout,
+                check=False,
+                shell=True,
+                env=env,
+                text=True,
+        )
+        self._info_result(command, res)
+
         if Path(tmp_premature_exit).exists():
             end_timestamp = datetime.datetime.now()
             duration = (end_timestamp - timestamp).total_seconds()
-            stderr = ''
-            with open(tmp_stderr, 'r', encoding="utf-8") as f:
-                stderr = f.read()
+            stderr = res.stderr
             logging.info('%s terminated with err %s.', self.binary,
                          stderr)
 
@@ -156,8 +150,6 @@ class GTest(BinaryTest):
             report_xml = JUnitXML(file=tmp_report)
 
             Path(tmp_report).unlink()
-
-        Path(tmp_stderr).unlink()
 
         return report_xml
 

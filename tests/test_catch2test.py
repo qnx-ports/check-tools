@@ -30,21 +30,6 @@ from check_utils import Catch2Test, Skipped, JUnitXML, TestMeta
 import common
 
 MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
-OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
-
-@pytest.fixture()
-def output_file():
-    output_path = Path(OUTPUT_FILE)
-
-    # Setup
-    if (output_path.exists()):
-        output_path.unlink()
-
-    yield OUTPUT_FILE
-
-    # Teardown
-    if (output_path.exists()):
-        output_path.unlink()
 
 def mkstemp_mock(suffix: str = None):
     tmp_xml = JUnitXML.make_from_passed([])
@@ -56,23 +41,24 @@ def mkstemp_mock(suffix: str = None):
     ('', None), ('--my-custom-opt1 --my-custom-opt2', None),
     ('', 300), ('--my-custom-opt1 --my-custom-opt2', 300)
     ])
-def test__run_catch2test(mocker, output_file, opts, timeout):
+def test__run_catch2test(mocker, opts, timeout):
     meta = TestMeta(Catch2Test)
-    catch2tests = list(Catch2Test._generate_test_list('bin', output_file, opts,
-                                                      meta, timeout))
+    catch2tests = list(Catch2Test._generate_test_list('bin', opts, meta,
+                                                      timeout))
 
     assert len(catch2tests) == 1
     catch2test = catch2tests[0]
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'./bin --reporter xml::out={MKSTEMP_REPORT_FILE} {opts} ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     catch2test._run_catch2test()
@@ -80,25 +66,25 @@ def test__run_catch2test(mocker, output_file, opts, timeout):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
 @patch.object(tempfile, 'mkstemp', mkstemp_mock)
-def test__run_catch2test_skipped1(mocker, output_file):
+def test__run_catch2test_skipped1(mocker):
     skipped = Skipped.make_from_dict({'name': 'bin1'})
 
     meta = TestMeta(Catch2Test, skipped=skipped.get_suites())
-    catch2tests = list(Catch2Test._generate_test_list('bin1', output_file, '',
-                                                      meta, None))
+    catch2tests = list(Catch2Test._generate_test_list('bin1', '', meta, None))
 
     assert len(catch2tests) == 1
     catch2test = catch2tests[0]
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'./bin1 --reporter xml::out={MKSTEMP_REPORT_FILE}  ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     catch2test._run_catch2test()
@@ -106,7 +92,7 @@ def test__run_catch2test_skipped1(mocker, output_file):
     subprocess.run.assert_called_once_with(**expected_kwargs)
 
 @patch.object(tempfile, 'mkstemp', mkstemp_mock)
-def test__run_catch2test_skipped2(mocker, output_file):
+def test__run_catch2test_skipped2(mocker):
     skipped = Skipped.make_from_dict({
         'name': 'bin2',
         'norun': False,
@@ -139,21 +125,21 @@ def test__run_catch2test_skipped2(mocker, output_file):
                         }]}]})
 
     meta = TestMeta(Catch2Test, skipped=skipped.get_suites())
-    catch2tests = list(Catch2Test._generate_test_list('bin2', output_file, '',
-                                                      meta, None))
+    catch2tests = list(Catch2Test._generate_test_list('bin2', '', meta, None))
 
     assert len(catch2tests) == 1
     catch2test = catch2tests[0]
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'./bin2 --reporter xml::out={MKSTEMP_REPORT_FILE}  *,~case1,~case2,~case3 ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     catch2test._run_catch2test()

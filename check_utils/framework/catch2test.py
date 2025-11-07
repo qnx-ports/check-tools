@@ -49,15 +49,17 @@ class Catch2Test(BinaryTest):
                           for case_name in skipped.get_case_names()))
 
         self._info_cmd(command)
-        with open('/dev/null', 'w') as output_f:
-            subprocess.run(
-                    args=command,
-                    stderr=output_f,
-                    stdout=output_f,
-                    timeout=self.timeout,
-                    check=False,
-                    shell=True
-            )
+        res = subprocess.run(
+                args=command,
+                timeout=self.timeout,
+                capture_output=True \
+                        if logging.getLogger().isEnabledFor(logging.INFO) \
+                        else False,
+                check=False,
+                shell=True,
+                text=True,
+        )
+        self._info_result(command, res)
 
         report_xml = JUnitXML(tmp_report)
         Path(tmp_report).unlink()

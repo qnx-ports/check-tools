@@ -30,22 +30,7 @@ from check_utils import QtTest, Skipped, JUnitXML, TestMeta
 import common
 
 MKSTEMP_REPORT_FILE: Final[str] = f'./tmp_mkstemp_{Path(__file__).stem}.xml'
-OUTPUT_FILE: Final[str] = f'./tmp_{Path(__file__).stem}.txt'
 BLACKLIST_FILE: Final[str] = './BLACKLIST'
-
-@pytest.fixture()
-def output_file():
-    output_path = Path(OUTPUT_FILE)
-
-    # Setup
-    if (output_path.exists()):
-        output_path.unlink()
-
-    yield OUTPUT_FILE
-
-    # Teardown
-    if (output_path.exists()):
-        output_path.unlink()
 
 @pytest.fixture()
 def blacklist_file():
@@ -71,23 +56,24 @@ def mkstemp_mock(suffix: str = None):
     ('', None), ('--my-custom-opt1 --my-custom-opt2', None),
     ('', 300), ('--my-custom-opt1 --my-custom-opt2', 300)
     ])
-def test__run_qttest(mocker, output_file, opts, timeout):
+def test__run_qttest(mocker, opts, timeout):
     meta = TestMeta(QtTest)
-    qttests = list(QtTest._generate_test_list('bin', output_file, opts, meta,
+    qttests = list(QtTest._generate_test_list('bin', opts, meta,
                                               timeout))
 
     assert len(qttests) == 1
     qttest = qttests[0]
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'./bin -o {MKSTEMP_REPORT_FILE},junitxml {opts} ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': timeout,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     qttest._run_qttest()
@@ -97,24 +83,25 @@ def test__run_qttest(mocker, output_file, opts, timeout):
     assert not Path(BLACKLIST_FILE).exists()
 
 @patch.object(tempfile, 'mkstemp', mkstemp_mock)
-def test__run_qttest_skipped1(mocker, output_file):
+def test__run_qttest_skipped1(mocker):
     skipped = Skipped.make_from_dict({'name': 'bin1'})
     meta = TestMeta(QtTest, skipped=skipped.get_suites())
-    qttests = list(QtTest._generate_test_list('bin1', output_file, '', meta,
+    qttests = list(QtTest._generate_test_list('bin1', '', meta,
                                               None))
 
     assert len(qttests) == 1
     qttest = qttests[0]
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'./bin1 -o {MKSTEMP_REPORT_FILE},junitxml  ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     qttest._run_qttest()
@@ -124,7 +111,7 @@ def test__run_qttest_skipped1(mocker, output_file):
     assert not Path(BLACKLIST_FILE).exists()
 
 @patch.object(tempfile, 'mkstemp', mkstemp_mock)
-def test__run_qttest_skipped2(mocker, output_file, blacklist_file):
+def test__run_qttest_skipped2(mocker, blacklist_file):
     skipped = Skipped.make_from_dict({
         'name': 'bin2',
         'norun': False,
@@ -156,21 +143,22 @@ def test__run_qttest_skipped2(mocker, output_file, blacklist_file):
                             'arch': ['x86_64']
                         }]}]})
     meta = TestMeta(QtTest, skipped=skipped.get_suites())
-    qttests = list(QtTest._generate_test_list('bin2', output_file, '', meta,
+    qttests = list(QtTest._generate_test_list('bin2', '', meta,
                                               None))
 
     assert len(qttests) == 1
     qttest = qttests[0]
 
-    mocker.patch('subprocess.run')
+    run_mock = mocker.patch('subprocess.run')
+    run_mock.return_value = subprocess.CompletedProcess([], 0, "", "")
 
     expected_kwargs = {
             'args': f'./bin2 -o {MKSTEMP_REPORT_FILE},junitxml  -skipblacklisted ',
-            'stderr': ANY,
-            'stdout': ANY,
+            'capture_output': True,
             'timeout': None,
             'check': False,
-            'shell': True
+            'shell': True,
+            'text': True,
             }
 
     qttest._run_qttest()
